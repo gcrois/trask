@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { TWorker, WebWorkerAdapter, WorkerId } from "../trask/workers";
 import { capitalizeText, reverseText, TaskType } from "../trask/types";
 import TestWorker from "./worker?worker";
@@ -8,7 +8,7 @@ const tasks = new TaskQueue();
 
 function App() {
 	const [input, setInput] = useState("");
-	const [output, setOutput] = useState<string[]>([]);
+	const [output, _setOutput] = useState<string[]>([]);
 
 	const [workers, setWorkers] = useState<ReadonlyMap<string, TWorker>>(new Map());
 
