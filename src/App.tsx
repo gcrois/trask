@@ -59,7 +59,6 @@ function App() {
 			<button onClick={() => addTask(capitalizeText)}>Add Capitalize Task</button>
 			<button onClick={() => addTask(reverseText)}>Add Reverse Task</button>
 			<button onClick={addWorker}>Add Worker</button>
-			{/* <button onClick={removeWorker}>Remove Worker</button> */}
 			<div>
 				<h2>Queue:</h2>
 				<ul>

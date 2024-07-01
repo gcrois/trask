@@ -19,8 +19,6 @@ export interface TWorker {
     status: WorkerStatus;
     message: string;
 
-	onRemove(): void;
-
     execute: <Input, Output>(task: TaskType<Input, Output>, input: Input) => Promise<Output>;
     requestJob: () => boolean;
 }
@@ -70,15 +68,10 @@ export class WebWorkerAdapter implements TWorker {
 
 	private worker: Worker;
 	private taskQueue: TaskQueue;
-	private reqLoop = this.requestJob.bind(this);
 
 	constructor(worker: Worker, taskQueue: TaskQueue) {
 		this.worker = worker;
 		this.taskQueue = taskQueue;
-	}
-
-	onRemove() {
-		this.taskQueue.off(TaskQueueEvent.QueueChange, this.reqLoop);
 	}
 
 	setMessage(message: string) {
