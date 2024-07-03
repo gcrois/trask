@@ -1,54 +1,39 @@
 // taskQueue.ts
-
 import { TaskType } from "./types";
 import { TWorker, WorkerStatus } from "./workers";
 import { v4 as uuid } from "uuid";
 
-type TaskId = string;
-type WorkerId = string;
-
 export enum QueuedTaskStatus {
-	Queued,
-	Pending,
-	Resolved,
-	Rejected,
-	Cancelled,
+    Queued, Pending, Resolved, Rejected, Cancelled
 }
 
 export enum TaskQueueEvent {
-	QueueChange = "queueChange",
-	WorkerChange = "workerChange",
+    QueueChange = "queueChange",
+    WorkerChange = "workerChange"
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface QueuedTask<Input = any, Output = any> {
-	id: TaskId;
-	timestamp: number;
-
-	status: QueuedTaskStatus;
-	worker?: WorkerId;
-
-	task: TaskType<Input, Output>;
-	input: Input;
-	output?: Output;
-
-	queuedTime: number;
-	startTime?: number;
-	endTime?: number;
-
-	resolve: (value: Output | PromiseLike<Output>) => void;
-	reject: (reason?: unknown) => void;
+    id: string;
+    timestamp: number;
+    status: QueuedTaskStatus;
+    worker?: string;
+    task: TaskType<Input, Output>;
+    input: Input;
+    output?: Output;
+    queuedTime: number;
+    startTime?: number;
+    endTime?: number;
+    externalPromise?: Promise<Output>;
+    resolve: (value: Output | PromiseLike<Output>) => void;
+    reject: (reason?: unknown) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// type Queue = QueuedTask<any, any>[];
-type Tasks = Map<TaskId, QueuedTask>;
-type TasksListener = (tasks: Tasks) => void;
+type TasksListener = (tasks: Map<string, QueuedTask>) => void;
 
 export class TaskQueue {
-	private tasks: Tasks = new Map();
-
-	private workers: Map<WorkerId, TWorker> = new Map();
+	private tasks: Map<string, QueuedTask> = new Map();
+	private workers: Map<string, TWorker> = new Map();
 	private listeners: { [key: string]: TasksListener[] } = {};
 
 	addWorker(worker: TWorker): void {
@@ -56,88 +41,83 @@ export class TaskQueue {
 		this.emit(TaskQueueEvent.WorkerChange);
 	}
 
-	removeWorker(worker: WorkerId) {
-		if (!this.workers.delete(worker)) {
-			console.error("Worker not found", worker);
-		}
+	removeWorker(workerId: string) {
+		this.workers.delete(workerId);
 		this.emit(TaskQueueEvent.WorkerChange);
 	}
 
-	getWorkers(): ReadonlyMap<WorkerId, TWorker> {
+	getWorkers(): ReadonlyMap<string, TWorker> {
 		return this.workers;
 	}
 
-	addTask<Input, Output>(task: TaskType<Input, Output>, input: Input): TaskId {
+	getTaskPromise(id: string): Promise<unknown> {
+		const queuedTask = this.tasks.get(id);
+		return queuedTask ? queuedTask.externalPromise! : Promise.reject("Task not found");
+	}
+
+	addTask<Input, Output>(task: TaskType<Input, Output>, input: Input): string {
 		const id = uuid();
 		const timestamp = Date.now();
 		const status = QueuedTaskStatus.Queued;
 		const queuedTime = Date.now();
 
+		let resolveExternal: (value: Output | PromiseLike<Output>) => void;
+		let rejectExternal: (reason?: unknown) => void;
+		const externalPromise = new Promise<Output>((resolve, reject) => {
+			resolveExternal = resolve;
+			rejectExternal = reject;
+		});
+
 		const promise = new Promise<Output>((resolve, reject) => {
-			this.emit(TaskQueueEvent.QueueChange);
-			this.tasks.set(id, { id, timestamp, task, input, resolve, reject, status, queuedTime });
+			this.tasks.set(id, { id, timestamp, task, input, resolve, reject, status, queuedTime, externalPromise });
 		});
 
 		promise.then(
 			(result) => {
 				const queuedTask = this.tasks.get(id);
-				const endTime = Date.now();
-
 				if (queuedTask) {
-					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Resolved, output: result, endTime });
-				} else {
-					console.error("Task not found", id);
+					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Resolved, output: result, endTime: Date.now() });
+					resolveExternal(result);
 				}
 				this.emit(TaskQueueEvent.QueueChange);
 			},
 			(error) => {
 				const queuedTask = this.tasks.get(id);
-				const endTime = Date.now();
-
 				if (queuedTask) {
-					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Rejected, output: error, endTime });
-				} else {
-					console.error("Task not found", id);
+					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Rejected, output: error, endTime: Date.now() });
+					rejectExternal(error);
 				}
 				this.emit(TaskQueueEvent.QueueChange);
 			}
 		);
 
 		this.emit(TaskQueueEvent.QueueChange);
-		const workers = Array.from(this.workers.values());
-
-		// ask waiting workers to pick up the task
-		for (const worker of workers.filter(w => w.status === WorkerStatus.Waiting)) {
-			if (worker.requestJob()) {
-				break;
+		this.workers.forEach(worker => {
+			if (worker.status === WorkerStatus.Waiting) {
+				worker.requestJob();
 			}
-		}
+		});
 
 		return id;
 	}
 
-	assignTask(task: TaskId, worker: WorkerId) {
-		const queuedTask = this.tasks.get(task);
-		const startTime = Date.now();
-
-		if (queuedTask) {
-			if (queuedTask.status !== QueuedTaskStatus.Queued) {
-				console.error("Task is not queued, but tried to be assigned", queuedTask);
-				return;
-			}
-			this.tasks.set(task, { ...queuedTask, status: QueuedTaskStatus.Pending, worker, startTime });
+	assignTask(taskId: string, workerId: string) {
+		const queuedTask = this.tasks.get(taskId);
+		if (queuedTask && queuedTask.status === QueuedTaskStatus.Queued) {
+			this.tasks.set(taskId, { ...queuedTask, status: QueuedTaskStatus.Pending, worker: workerId, startTime: Date.now() });
 			this.emit(TaskQueueEvent.QueueChange);
-		} else {
-			console.error("Task not found", task);
 		}
 	}
 
-	cancelTask(id: TaskId) {
-		this.tasks.set(id, { ...this.tasks.get(id)!, status: QueuedTaskStatus.Cancelled });
-		this.emit(TaskQueueEvent.QueueChange);
+	cancelTask(id: string) {
+		const task = this.tasks.get(id);
+		if (task) {
+			this.tasks.set(id, { ...task, status: QueuedTaskStatus.Cancelled });
+			this.emit(TaskQueueEvent.QueueChange);
+		}
 	}
 
-	getTasks(): ReadonlyMap<TaskId, QueuedTask> {
+	getTasks(): ReadonlyMap<string, QueuedTask> {
 		return this.tasks;
 	}
 
@@ -154,10 +134,7 @@ export class TaskQueue {
 		}
 	}
 
-	emit(event: string) {
-		console.log("Emitting event", event);
-		if (this.listeners[event]) {
-			this.listeners[event].forEach(callback => callback(this.tasks));
-		}
+	emit(event: TaskQueueEvent) {
+		this.listeners[event]?.forEach(callback => callback(this.tasks));
 	}
 }

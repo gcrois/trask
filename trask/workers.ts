@@ -2,75 +2,36 @@
 
 import { TaskType } from "./types";
 import { QueuedTaskStatus, TaskQueue, TaskQueueEvent } from "./queue";
-
 import { v4 as uuid } from "uuid";
 
 export type WorkerId = string;
 
 export enum WorkerStatus {
-    Idle = "Idle",
+	Idle = "Idle",
 	Waiting = "Waiting",
-    Busy = "Busy",
+	Busy = "Busy",
 	Paused = "Paused",
 }
 
 export interface TWorker {
-    id: WorkerId;
-    status: WorkerStatus;
-    message: string;
+	id: WorkerId;
+	status: WorkerStatus;
+	message: string;
 
-    execute: <Input, Output>(task: TaskType<Input, Output>, input: Input) => Promise<Output>;
-    requestJob: () => boolean;
+	execute: <Input, Output>(task: TaskType<Input, Output>, input: Input) => Promise<Output>;
+	requestJob: () => boolean;
+	setMessage: (message: string) => void;
+	setStatus: (status: WorkerStatus) => void;
 }
 
-// export class APIWorker implements TWorker {
-// 	public status: WorkerStatus = WorkerStatus.Idle;
-// 	public message: string = "not implemented";
-// 	private taskQueue: TaskQueue;
-
-// 	constructor(private apiEndpoint: string, taskQueue: TaskQueue) {
-// 		this.taskQueue = taskQueue;
-// 	}
-
-// 	async execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output> {
-// 		this.status = WorkerStatus.Busy;
-// 		try {
-// 			const response = await fetch(this.apiEndpoint, {
-// 				method: "POST",
-// 				headers: { "Content-Type": "application/json" },
-// 				body: JSON.stringify({ task: task.name, input }),
-// 			});
-// 			await this.delay(1000); // 1 second delay
-// 			const result = await response.json();
-// 			return result;
-// 		} finally {
-// 			this.status = WorkerStatus.Idle;
-// 			this.requestJob();
-// 		}
-// 	}
-
-// 	requestJob() {
-// 		if (this.status === WorkerStatus.Idle) {
-// 			this.taskQueue.assignJobToWorker(this);
-// 		}
-// 	}
-
-// 	private delay(ms: number): Promise<void> {
-// 		return new Promise(resolve => setTimeout(resolve, ms));
-// 	}
-// }
-
-export class WebWorkerAdapter implements TWorker {
+abstract class BaseWorker implements TWorker {
 	public status: WorkerStatus = WorkerStatus.Idle;
 	public message: string = "";
 
 	readonly id: WorkerId = uuid();
+	protected taskQueue: TaskQueue;
 
-	private worker: Worker;
-	private taskQueue: TaskQueue;
-
-	constructor(worker: Worker, taskQueue: TaskQueue) {
-		this.worker = worker;
+	constructor(taskQueue: TaskQueue) {
 		this.taskQueue = taskQueue;
 	}
 
@@ -86,17 +47,9 @@ export class WebWorkerAdapter implements TWorker {
 		this.taskQueue.emit(TaskQueueEvent.WorkerChange);
 	}
 
-	async execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output> {
-		return await new Promise((resolve, reject) => {
-			this.worker.onmessage = async (event) => {
-				resolve(event.data);
-			};
-			this.worker.onerror = (error) => reject(error);
-			this.worker.postMessage({ task: task.name, input });
-		});
-	}
+	abstract execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output>;
 
-	requestJob() {
+	requestJob(): boolean {
 		if (!(this.status === WorkerStatus.Idle || this.status === WorkerStatus.Waiting)) {
 			console.warn(`Worker ${this.id} is not idle or waiting, but requested a job`);
 			return false;
@@ -138,7 +91,92 @@ export class WebWorkerAdapter implements TWorker {
 				this.setStatus(WorkerStatus.Waiting);
 				console.error(error);
 			});
-		
+
 		return true;
+	}
+}
+
+export class WebWorkerAdapter extends BaseWorker {
+	private worker: Worker;
+
+	constructor(worker: Worker, taskQueue: TaskQueue) {
+		super(taskQueue);
+		this.worker = worker;
+	}
+
+	async execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output> {
+		return await new Promise((resolve, reject) => {
+			this.worker.onmessage = async (event) => {
+				resolve(event.data);
+			};
+			this.worker.onerror = (error) => reject(error);
+			this.worker.postMessage({ task: task.name, input });
+		});
+	}
+}
+
+export class APIWorker extends BaseWorker {
+	private handshakeUrl: string;
+	private apiEndpoint: string;
+
+	constructor(apiEndpoint: string, taskQueue: TaskQueue) {
+		super(taskQueue);
+
+		this.apiEndpoint = `${apiEndpoint}/execute`;
+		this.handshakeUrl = `${apiEndpoint}/handshake`;
+
+		this.handshake();
+	}
+
+	private async handshake() {
+		try {
+			const response = await fetch(this.handshakeUrl, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ handshake: true }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Handshake failed");
+			}
+
+			const data = await response.json();
+			console.log("Handshake successful:", data);
+		} catch (error) {
+			console.error("Handshake error:", error);
+		}
+	}
+
+	async execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output> {
+		this.status = WorkerStatus.Busy;
+		this.message = `Executing ${task.name}`;
+
+		try {
+			const response = await fetch(this.apiEndpoint, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					taskName: task.name,
+					input: input,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("API request failed");
+			}
+
+			const data = await response.json();
+			this.status = WorkerStatus.Waiting;
+			this.message = "Waiting for task";
+			return data.result as Output;
+		} catch (error) {
+			this.status = WorkerStatus.Paused;
+			this.message = `Error`;
+			throw error;
+		}
 	}
 }
