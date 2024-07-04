@@ -1,8 +1,12 @@
+// App.tsx
+
 import { useState, useEffect } from "react";
-import { TWorker, WebWorkerAdapter, APIWorker, WorkerId } from "../trask/workers";
-import { capitalizeText, reverseText, TaskType } from "../trask/types";
+import { TWorker, WebWorkerAdapter, APIWorker, WorkerId } from "@src/workers";
+import { Task, TaskType } from "@src/types";
 import TestWorker from "./worker?worker";
-import { QueuedTask, QueuedTaskStatus, TaskQueue, TaskQueueEvent } from "../trask/queue";
+import { QueuedTask, QueuedTaskStatus, TaskQueue, TaskQueueEvent } from "@src/queue";
+
+const defaultEndpoint = "http://localhost:8000";
 
 const tasks = new TaskQueue();
 
@@ -32,18 +36,20 @@ function App() {
 	};
 
 	const addAPIWorker = () => {
-		if (apiEndpoint) {
-			const newWorker = new APIWorker(apiEndpoint, tasks);
-			tasks.addWorker(newWorker);
-		}
+		const newWorker = new APIWorker(
+			apiEndpoint || defaultEndpoint,
+			tasks
+		);
+
+		tasks.addWorker(newWorker);
 	};
 
 	const removeWorker = (id: WorkerId) => {
 		tasks.removeWorker(id);
 	};
 
-	const addTask = (task: TaskType<string, string>) => {
-		const id = tasks.addTask(task, input);
+	const addTask = <T extends TaskType>(task: Task<T>) => {
+		const id = tasks.addTask(task);
 		const promise = tasks.getTaskPromise(id) as Promise<string>;
 		promise.then((_result) => {
 			setCompletedTasks((tasks) => [...tasks, id]);
@@ -59,15 +65,15 @@ function App() {
 				onChange={(e) => setInput(e.target.value)}
 				placeholder="Enter text"
 			/>
-			<button onClick={() => addTask(capitalizeText)}>Add Capitalize Task</button>
-			<button onClick={() => addTask(reverseText)}>Add Reverse Task</button>
+			<button onClick={() => addTask({name: "capitalize", request: {input}})}>Add Capitalize Task</button>
+			<button onClick={() => addTask({name: "reverse", request: {input}})}>Add Reverse Task</button>
 			<button onClick={addWebWorker}>Add Web Worker</button>
 			<div>
 				<input
 					type="text"
 					value={apiEndpoint}
 					onChange={(e) => setApiEndpoint(e.target.value)}
-					placeholder="Enter API endpoint"
+					placeholder={defaultEndpoint}
 				/>
 				<button onClick={addAPIWorker}>Add API Worker</button>
 			</div>
@@ -93,7 +99,7 @@ function App() {
 				<h2>Output:</h2>
 				{completedTasks.map((id) => {
 					const task = queue.get(id);
-					return <p key={id}>{id.split("-")[0]}: {task?.output}</p>;
+					return <p key={id}>{id.split("-")[0]}: {task?.task.response.result}</p>;
 				})}
 			</div>
 		</div>

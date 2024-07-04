@@ -8,15 +8,19 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts tasks.proto"
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
+    "protobufjs": "^7.3.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "ts-proto": "^1.181.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20.14.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.13.1",

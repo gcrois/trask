@@ -1,5 +1,5 @@
 // taskQueue.ts
-import { TaskType } from "./types";
+import { Task, TaskType } from "@src/types";
 import { TWorker, WorkerStatus } from "./workers";
 import { v4 as uuid } from "uuid";
 
@@ -12,15 +12,18 @@ export enum TaskQueueEvent {
     WorkerChange = "workerChange"
 }
 
+type QueueId = string;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface QueuedTask<Input = any, Output = any> {
-    id: string;
+export interface QueuedTask<
+	T extends TaskType = any,
+	Input = Task<T>["request"] & {},
+	Output = Task<T>["response"] & {}
+> {
+    id: QueueId;
     timestamp: number;
     status: QueuedTaskStatus;
     worker?: string;
-    task: TaskType<Input, Output>;
-    input: Input;
-    output?: Output;
+	task: Task<T>;
     queuedTime: number;
     startTime?: number;
     endTime?: number;
@@ -55,7 +58,12 @@ export class TaskQueue {
 		return queuedTask ? queuedTask.externalPromise! : Promise.reject("Task not found");
 	}
 
-	addTask<Input, Output>(task: TaskType<Input, Output>, input: Input): string {
+	// addTask<Input, Output>(task: TaskType<Input, Output>, input: Input): string {
+	addTask<
+		T extends TaskType,
+		Input = Task<T>["request"] & {},
+		Output = Task<T>["request"]
+	>(task: Task<T>): QueueId {
 		const id = uuid();
 		const timestamp = Date.now();
 		const status = QueuedTaskStatus.Queued;
@@ -69,22 +77,22 @@ export class TaskQueue {
 		});
 
 		const promise = new Promise<Output>((resolve, reject) => {
-			this.tasks.set(id, { id, timestamp, task, input, resolve, reject, status, queuedTime, externalPromise });
+			this.tasks.set(id, { id, timestamp, task, resolve, reject, status, queuedTime, externalPromise });
 		});
 
 		promise.then(
-			(result) => {
+			(response) => {
 				const queuedTask = this.tasks.get(id);
 				if (queuedTask) {
-					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Resolved, output: result, endTime: Date.now() });
-					resolveExternal(result);
+					this.tasks.set(id, { ...queuedTask, task: {...task, response}, status: QueuedTaskStatus.Resolved, endTime: Date.now() });
+					resolveExternal(response);
 				}
 				this.emit(TaskQueueEvent.QueueChange);
 			},
 			(error) => {
 				const queuedTask = this.tasks.get(id);
 				if (queuedTask) {
-					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Rejected, output: error, endTime: Date.now() });
+					this.tasks.set(id, { ...queuedTask, status: QueuedTaskStatus.Rejected, endTime: Date.now() });
 					rejectExternal(error);
 				}
 				this.emit(TaskQueueEvent.QueueChange);

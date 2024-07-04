@@ -1,37 +1,69 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from typing import Any, Dict, Optional, Union
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 
-app = Flask(__name__)
-CORS(app)
+from proto.py.tasks import TaskRequest, TaskResponse, CapitalizeTextRequest, ReverseTextRequest, CapitalizeTextResponse, ReverseTextResponse
 
-@app.route('/handshake', methods=['POST'])
-def handshake():
-    data: Optional[Dict[str, Any]] = request.json
-    if data and data.get('handshake'):
-        return jsonify({'status': 'Handshake successful'}), 200
-    return jsonify({'error': 'Invalid handshake request'}), 400
+app = FastAPI()
 
-@app.route('/execute', methods=['POST'])
-def execute_task():
-    data: Optional[Dict[str, Any]] = request.json
-    if not data:
-        return jsonify({'error': 'Invalid request data'}), 400
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    task_name: Optional[str] = data.get('taskName')
-    input_text: Optional[str] = data.get('input')
+class HandshakeData(BaseModel):
+    handshake: bool
 
-    if not task_name or not input_text:
-        return jsonify({'error': 'taskName and input are required'}), 400
+@app.post("/handshake")
+async def handshake(data: HandshakeData):
+    if data.handshake:
+        return {"status": "Handshake successful"}
+    raise HTTPException(status_code=400, detail="Invalid handshake request")
 
-    if task_name == 'capitalizeText':
-        result = input_text.upper()
-    elif task_name == 'reverseText':
-        result = input_text[::-1]
-    else:
-        return jsonify({'error': 'Unknown task'}), 400
+@app.post("/execute")
+async def execute_task(data: TaskRequest):
+    print("Received task request:", data)
+    parsed = data.to_dict()
+    assert len(parsed.keys()) == 1, "Only one task type is allowed"
     
-    return jsonify({'result': result})
+    task_type = list(parsed.keys())[0]
+    
+    if task_type == "capitalize":
+        input_text = parsed["capitalize"]["input"]
+        result = input_text.upper()
+        return TaskResponse(capitalize=CapitalizeTextResponse(result=result))
+        # response = CapitalizeTextResponse(result=result)
+    elif task_type == "reverse":
+        input_text = parsed["reverse"]["input"]
+        result = input_text[::-1]
+        return TaskResponse(reverse=ReverseTextResponse(result=result))
+        # response = ReverseTextResponse(result=result)
+    else:
+        raise HTTPException(status_code=400, detail="Unknown task type")
+    
+    # return TaskResponse(**{task_type: response})
+    # for key in data.to_dict().keys():
+    #     print(key)
+    # if not data.taskName or not data.input:
+    #     raise HTTPException(status_code=400, detail="taskName and input are required")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    # task_name = data.taskName
+    # input_text = data.input.input
+
+    # if task_name == "capitalize":
+    #     result = input_text.upper()
+    # elif task_name == "reverse":
+    #     result = input_text[::-1]
+    # else:
+    #     raise HTTPException(status_code=400, detail="Unknown task")
+    
+    # return {"result": result}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="debug")
