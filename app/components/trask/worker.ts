@@ -1,6 +1,8 @@
 import { localTasks, Task } from "@src/types";
 
-self.onmessage = async function <T extends keyof typeof localTasks>(e: { data: Task<T> }) {
+self.onmessage = async function <T extends keyof typeof localTasks>(e: {
+	data: Task<T>;
+}) {
 	const { name, request } = e.data;
 
 	if (name in localTasks) {

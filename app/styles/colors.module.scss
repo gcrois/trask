@@ -1,0 +1,35 @@
+// primary color is for main elements
+$primary: #9fd098;
+$primary-variant: #4f9444;
+$on-primary: #ffffff;
+
+// secondary color is for alternative elements
+$secondary: #c488da;
+$secondary-variant: #912e91;
+$on-secondary: #373737;
+
+// background color is the background of the app
+$background: #d8e6ea;
+$on-background: #373737;
+$surface: $background;
+$on-surface: $on-background;
+
+// error color is for error messages
+$error: #dc3545;
+$on-error: #ffffff;
+
+/* stylelint-disable selector-pseudo-class-no-unknown, property-no-unknown */
+:export {
+	primary: $primary;
+	primaryVariant: $primary-variant;
+	onPrimary: $on-primary;
+	secondary: $secondary;
+	secondaryVariant: $secondary-variant;
+	onSecondary: $on-secondary;
+	background: $background;
+	onBackground: $on-background;
+	surface: $surface;
+	onSurface: $on-surface;
+	error: $error;
+	onError: $on-error;
+}

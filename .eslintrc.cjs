@@ -38,5 +38,6 @@ module.exports = {
 				allowTemplateLiterals: true,
 			},
 		],
+		// "react/no-unknown-property": ["error", { ignore: ["css"] }],
 	},
 };

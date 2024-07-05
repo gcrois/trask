@@ -1,0 +1,27 @@
+#root,
+html,
+body {
+	margin: 0;
+	padding: 0.05px;
+	font-family: Voltaire, sans-serif;
+	font-size: 12px;
+	font-weight: 400;
+
+	width: 100%;
+	height: 100%;
+}
+
+@font-face {
+	font-family: Voltaire;
+	src: url("./Voltaire.ttf") format("truetype");
+}
+
+// .container {
+//     background-color: red;
+//     box-sizing: border-box;
+//     height: 100%;
+
+//     // prevent margin collapsing
+//     padding-top: 1px;
+//     margin-top: -1px;
+// }

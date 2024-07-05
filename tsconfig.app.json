@@ -29,7 +29,10 @@
 			"@src/*": ["src/*"],
 			"@app/*": ["app/*"],
 			"@proto/*": ["proto/ts/*"]
-		}
+		},
+
+		/* emotion */
+		"jsxImportSource": "@emotion/react"
 	},
 	"include": ["app", "src", "proto/ts"]
 }
