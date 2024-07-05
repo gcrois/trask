@@ -1,8 +1,8 @@
-import { localTasks, Task, TaskType } from "@src/types";
+import { localTasks, Task } from "@src/types";
 
-self.onmessage = async function<T extends keyof typeof localTasks>(e: any) {
-	const { name, request } = e.data as Task<T>;
-  
+self.onmessage = async function <T extends keyof typeof localTasks>(e: { data: Task<T> }) {
+	const { name, request } = e.data;
+
 	if (name in localTasks) {
 		const result = await localTasks[name].execute(request);
 		self.postMessage(result);

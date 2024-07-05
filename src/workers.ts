@@ -19,7 +19,9 @@ export interface TWorker {
 	status: WorkerStatus;
 	message: string;
 
-	execute: <T extends TaskType>(task: Task<T>) => Promise<Task<T>["response"]>
+	execute: <T extends TaskType>(
+		task: Task<T>,
+	) => Promise<Task<T>["response"]>;
 	requestJob: () => boolean;
 	setMessage: (message: string) => void;
 	setStatus: (status: WorkerStatus) => void;
@@ -49,11 +51,20 @@ abstract class BaseWorker implements TWorker {
 	}
 
 	// abstract execute<Input, Output>(task: TaskType<Input, Output>, input: Input): Promise<Output>;
-	abstract execute<T extends TaskType>(task: Task<T>): Promise<Task<T>["response"]>;
+	abstract execute<T extends TaskType>(
+		task: Task<T>,
+	): Promise<Task<T>["response"]>;
 
 	requestJob(): boolean {
-		if (!(this.status === WorkerStatus.Idle || this.status === WorkerStatus.Waiting)) {
-			console.warn(`Worker ${this.id} is not idle or waiting, but requested a job`);
+		if (
+			!(
+				this.status === WorkerStatus.Idle ||
+				this.status === WorkerStatus.Waiting
+			)
+		) {
+			console.warn(
+				`Worker ${this.id} is not idle or waiting, but requested a job`,
+			);
 			return false;
 		}
 
@@ -61,11 +72,9 @@ abstract class BaseWorker implements TWorker {
 		const tasks = Array.from(this.taskQueue.getTasks());
 
 		// find all queued tasks
-		const queuedTasks = tasks.filter(
-			([_id, task]) => {
-				return task.status === QueuedTaskStatus.Queued
-			}
-		);
+		const queuedTasks = tasks.filter(([_id, task]) => {
+			return task.status === QueuedTaskStatus.Queued;
+		});
 
 		// if no tasks, listen once for queue change
 		if (queuedTasks.length === 0) {
@@ -88,12 +97,12 @@ abstract class BaseWorker implements TWorker {
 		this.setStatus(WorkerStatus.Busy);
 
 		this.execute(task.task)
-			.then(result => {
+			.then((result) => {
 				task.resolve(result);
 				this.setStatus(WorkerStatus.Waiting);
 				this.requestJob();
 			})
-			.catch(error => {
+			.catch((error) => {
 				task.reject(error);
 				this.setStatus(WorkerStatus.Waiting);
 				console.error(error);
@@ -111,7 +120,9 @@ export class WebWorkerAdapter extends BaseWorker {
 		this.worker = worker;
 	}
 
-	async execute<T extends TaskType>(task: Task<T>): Promise<Task<T>["response"]> {	
+	async execute<T extends TaskType>(
+		task: Task<T>,
+	): Promise<Task<T>["response"]> {
 		console.log("sending task to webworker", task);
 		return await new Promise((resolve, reject) => {
 			this.worker.onmessage = async (event) => {
@@ -119,8 +130,7 @@ export class WebWorkerAdapter extends BaseWorker {
 			};
 			this.worker.onerror = (error) => reject(error);
 			this.worker.postMessage(task);
-		}
-		);
+		});
 	}
 }
 
@@ -160,7 +170,9 @@ export class APIWorker extends BaseWorker {
 		}
 	}
 
-	async execute<T extends TaskType>(task: Task<T>): Promise<Task<T>["response"]> {
+	async execute<T extends TaskType>(
+		task: Task<T>,
+	): Promise<Task<T>["response"]> {
 		this.setStatus(WorkerStatus.Busy);
 		this.setMessage(`Executing ${typeof task.name}`);
 		console.log("sending task to api", task);
@@ -172,7 +184,7 @@ export class APIWorker extends BaseWorker {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					[task.name]: task.request
+					[task.name]: task.request,
 				} as TaskRequest),
 			});
 
@@ -180,8 +192,8 @@ export class APIWorker extends BaseWorker {
 				throw new Error("API request failed");
 			}
 
-			const data = await response.json() as TaskResponse;
-			
+			const data = (await response.json()) as TaskResponse;
+
 			this.setStatus(WorkerStatus.Waiting);
 			this.setMessage("Waiting for task");
 			return data[task.name];

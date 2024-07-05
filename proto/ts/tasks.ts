@@ -11,436 +11,554 @@ export const protobufPackage = "tasks";
 
 /** Define a generic task request that can handle multiple types of tasks */
 export interface TaskRequest {
-  capitalize?:
-    | CapitalizeTextRequest
-    | undefined;
-  /** Future tasks can be added here as new fields */
-  reverse?: ReverseTextRequest | undefined;
+	capitalize?: CapitalizeTextRequest | undefined;
+	/** Future tasks can be added here as new fields */
+	reverse?: ReverseTextRequest | undefined;
 }
 
 /** Define a generic task response that can handle multiple types of task responses */
 export interface TaskResponse {
-  capitalize?:
-    | CapitalizeTextResponse
-    | undefined;
-  /** Future task responses can be added here as new fields */
-  reverse?: ReverseTextResponse | undefined;
+	capitalize?: CapitalizeTextResponse | undefined;
+	/** Future task responses can be added here as new fields */
+	reverse?: ReverseTextResponse | undefined;
 }
 
 /** Request and response definitions for capitalizing text */
 export interface CapitalizeTextRequest {
-  input: string;
+	input: string;
 }
 
 export interface CapitalizeTextResponse {
-  result: string;
+	result: string;
 }
 
 /** Request and response definitions for reversing text */
 export interface ReverseTextRequest {
-  input: string;
+	input: string;
 }
 
 export interface ReverseTextResponse {
-  result: string;
+	result: string;
 }
 
 function createBaseTaskRequest(): TaskRequest {
-  return { capitalize: undefined, reverse: undefined };
+	return { capitalize: undefined, reverse: undefined };
 }
 
 export const TaskRequest = {
-  encode(message: TaskRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.capitalize !== undefined) {
-      CapitalizeTextRequest.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.reverse !== undefined) {
-      ReverseTextRequest.encode(message.reverse, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
+	encode(
+		message: TaskRequest,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.capitalize !== undefined) {
+			CapitalizeTextRequest.encode(
+				message.capitalize,
+				writer.uint32(10).fork(),
+			).ldelim();
+		}
+		if (message.reverse !== undefined) {
+			ReverseTextRequest.encode(
+				message.reverse,
+				writer.uint32(18).fork(),
+			).ldelim();
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): TaskRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTaskRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: _m0.Reader | Uint8Array, length?: number): TaskRequest {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseTaskRequest();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.capitalize = CapitalizeTextRequest.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
+					message.capitalize = CapitalizeTextRequest.decode(
+						reader,
+						reader.uint32(),
+					);
+					continue;
+				case 2:
+					if (tag !== 18) {
+						break;
+					}
 
-          message.reverse = ReverseTextRequest.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.reverse = ReverseTextRequest.decode(
+						reader,
+						reader.uint32(),
+					);
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): TaskRequest {
-    return {
-      capitalize: isSet(object.capitalize) ? CapitalizeTextRequest.fromJSON(object.capitalize) : undefined,
-      reverse: isSet(object.reverse) ? ReverseTextRequest.fromJSON(object.reverse) : undefined,
-    };
-  },
+	fromJSON(object: any): TaskRequest {
+		return {
+			capitalize: isSet(object.capitalize)
+				? CapitalizeTextRequest.fromJSON(object.capitalize)
+				: undefined,
+			reverse: isSet(object.reverse)
+				? ReverseTextRequest.fromJSON(object.reverse)
+				: undefined,
+		};
+	},
 
-  toJSON(message: TaskRequest): unknown {
-    const obj: any = {};
-    if (message.capitalize !== undefined) {
-      obj.capitalize = CapitalizeTextRequest.toJSON(message.capitalize);
-    }
-    if (message.reverse !== undefined) {
-      obj.reverse = ReverseTextRequest.toJSON(message.reverse);
-    }
-    return obj;
-  },
+	toJSON(message: TaskRequest): unknown {
+		const obj: any = {};
+		if (message.capitalize !== undefined) {
+			obj.capitalize = CapitalizeTextRequest.toJSON(message.capitalize);
+		}
+		if (message.reverse !== undefined) {
+			obj.reverse = ReverseTextRequest.toJSON(message.reverse);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<TaskRequest>, I>>(base?: I): TaskRequest {
-    return TaskRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<TaskRequest>, I>>(object: I): TaskRequest {
-    const message = createBaseTaskRequest();
-    message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
-      ? CapitalizeTextRequest.fromPartial(object.capitalize)
-      : undefined;
-    message.reverse = (object.reverse !== undefined && object.reverse !== null)
-      ? ReverseTextRequest.fromPartial(object.reverse)
-      : undefined;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<TaskRequest>, I>>(
+		base?: I,
+	): TaskRequest {
+		return TaskRequest.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<TaskRequest>, I>>(
+		object: I,
+	): TaskRequest {
+		const message = createBaseTaskRequest();
+		message.capitalize =
+			object.capitalize !== undefined && object.capitalize !== null
+				? CapitalizeTextRequest.fromPartial(object.capitalize)
+				: undefined;
+		message.reverse =
+			object.reverse !== undefined && object.reverse !== null
+				? ReverseTextRequest.fromPartial(object.reverse)
+				: undefined;
+		return message;
+	},
 };
 
 function createBaseTaskResponse(): TaskResponse {
-  return { capitalize: undefined, reverse: undefined };
+	return { capitalize: undefined, reverse: undefined };
 }
 
 export const TaskResponse = {
-  encode(message: TaskResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.capitalize !== undefined) {
-      CapitalizeTextResponse.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.reverse !== undefined) {
-      ReverseTextResponse.encode(message.reverse, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
+	encode(
+		message: TaskResponse,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.capitalize !== undefined) {
+			CapitalizeTextResponse.encode(
+				message.capitalize,
+				writer.uint32(10).fork(),
+			).ldelim();
+		}
+		if (message.reverse !== undefined) {
+			ReverseTextResponse.encode(
+				message.reverse,
+				writer.uint32(18).fork(),
+			).ldelim();
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): TaskResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTaskResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: _m0.Reader | Uint8Array, length?: number): TaskResponse {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseTaskResponse();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.capitalize = CapitalizeTextResponse.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
+					message.capitalize = CapitalizeTextResponse.decode(
+						reader,
+						reader.uint32(),
+					);
+					continue;
+				case 2:
+					if (tag !== 18) {
+						break;
+					}
 
-          message.reverse = ReverseTextResponse.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.reverse = ReverseTextResponse.decode(
+						reader,
+						reader.uint32(),
+					);
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): TaskResponse {
-    return {
-      capitalize: isSet(object.capitalize) ? CapitalizeTextResponse.fromJSON(object.capitalize) : undefined,
-      reverse: isSet(object.reverse) ? ReverseTextResponse.fromJSON(object.reverse) : undefined,
-    };
-  },
+	fromJSON(object: any): TaskResponse {
+		return {
+			capitalize: isSet(object.capitalize)
+				? CapitalizeTextResponse.fromJSON(object.capitalize)
+				: undefined,
+			reverse: isSet(object.reverse)
+				? ReverseTextResponse.fromJSON(object.reverse)
+				: undefined,
+		};
+	},
 
-  toJSON(message: TaskResponse): unknown {
-    const obj: any = {};
-    if (message.capitalize !== undefined) {
-      obj.capitalize = CapitalizeTextResponse.toJSON(message.capitalize);
-    }
-    if (message.reverse !== undefined) {
-      obj.reverse = ReverseTextResponse.toJSON(message.reverse);
-    }
-    return obj;
-  },
+	toJSON(message: TaskResponse): unknown {
+		const obj: any = {};
+		if (message.capitalize !== undefined) {
+			obj.capitalize = CapitalizeTextResponse.toJSON(message.capitalize);
+		}
+		if (message.reverse !== undefined) {
+			obj.reverse = ReverseTextResponse.toJSON(message.reverse);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<TaskResponse>, I>>(base?: I): TaskResponse {
-    return TaskResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<TaskResponse>, I>>(object: I): TaskResponse {
-    const message = createBaseTaskResponse();
-    message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
-      ? CapitalizeTextResponse.fromPartial(object.capitalize)
-      : undefined;
-    message.reverse = (object.reverse !== undefined && object.reverse !== null)
-      ? ReverseTextResponse.fromPartial(object.reverse)
-      : undefined;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<TaskResponse>, I>>(
+		base?: I,
+	): TaskResponse {
+		return TaskResponse.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<TaskResponse>, I>>(
+		object: I,
+	): TaskResponse {
+		const message = createBaseTaskResponse();
+		message.capitalize =
+			object.capitalize !== undefined && object.capitalize !== null
+				? CapitalizeTextResponse.fromPartial(object.capitalize)
+				: undefined;
+		message.reverse =
+			object.reverse !== undefined && object.reverse !== null
+				? ReverseTextResponse.fromPartial(object.reverse)
+				: undefined;
+		return message;
+	},
 };
 
 function createBaseCapitalizeTextRequest(): CapitalizeTextRequest {
-  return { input: "" };
+	return { input: "" };
 }
 
 export const CapitalizeTextRequest = {
-  encode(message: CapitalizeTextRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.input !== "") {
-      writer.uint32(10).string(message.input);
-    }
-    return writer;
-  },
+	encode(
+		message: CapitalizeTextRequest,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.input !== "") {
+			writer.uint32(10).string(message.input);
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CapitalizeTextRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCapitalizeTextRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(
+		input: _m0.Reader | Uint8Array,
+		length?: number,
+	): CapitalizeTextRequest {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseCapitalizeTextRequest();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.input = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.input = reader.string();
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): CapitalizeTextRequest {
-    return { input: isSet(object.input) ? globalThis.String(object.input) : "" };
-  },
+	fromJSON(object: any): CapitalizeTextRequest {
+		return {
+			input: isSet(object.input) ? globalThis.String(object.input) : "",
+		};
+	},
 
-  toJSON(message: CapitalizeTextRequest): unknown {
-    const obj: any = {};
-    if (message.input !== "") {
-      obj.input = message.input;
-    }
-    return obj;
-  },
+	toJSON(message: CapitalizeTextRequest): unknown {
+		const obj: any = {};
+		if (message.input !== "") {
+			obj.input = message.input;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<CapitalizeTextRequest>, I>>(base?: I): CapitalizeTextRequest {
-    return CapitalizeTextRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CapitalizeTextRequest>, I>>(object: I): CapitalizeTextRequest {
-    const message = createBaseCapitalizeTextRequest();
-    message.input = object.input ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<CapitalizeTextRequest>, I>>(
+		base?: I,
+	): CapitalizeTextRequest {
+		return CapitalizeTextRequest.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<CapitalizeTextRequest>, I>>(
+		object: I,
+	): CapitalizeTextRequest {
+		const message = createBaseCapitalizeTextRequest();
+		message.input = object.input ?? "";
+		return message;
+	},
 };
 
 function createBaseCapitalizeTextResponse(): CapitalizeTextResponse {
-  return { result: "" };
+	return { result: "" };
 }
 
 export const CapitalizeTextResponse = {
-  encode(message: CapitalizeTextResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.result !== "") {
-      writer.uint32(10).string(message.result);
-    }
-    return writer;
-  },
+	encode(
+		message: CapitalizeTextResponse,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.result !== "") {
+			writer.uint32(10).string(message.result);
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CapitalizeTextResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCapitalizeTextResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(
+		input: _m0.Reader | Uint8Array,
+		length?: number,
+	): CapitalizeTextResponse {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseCapitalizeTextResponse();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.result = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.result = reader.string();
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): CapitalizeTextResponse {
-    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
-  },
+	fromJSON(object: any): CapitalizeTextResponse {
+		return {
+			result: isSet(object.result)
+				? globalThis.String(object.result)
+				: "",
+		};
+	},
 
-  toJSON(message: CapitalizeTextResponse): unknown {
-    const obj: any = {};
-    if (message.result !== "") {
-      obj.result = message.result;
-    }
-    return obj;
-  },
+	toJSON(message: CapitalizeTextResponse): unknown {
+		const obj: any = {};
+		if (message.result !== "") {
+			obj.result = message.result;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<CapitalizeTextResponse>, I>>(base?: I): CapitalizeTextResponse {
-    return CapitalizeTextResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CapitalizeTextResponse>, I>>(object: I): CapitalizeTextResponse {
-    const message = createBaseCapitalizeTextResponse();
-    message.result = object.result ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<CapitalizeTextResponse>, I>>(
+		base?: I,
+	): CapitalizeTextResponse {
+		return CapitalizeTextResponse.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<CapitalizeTextResponse>, I>>(
+		object: I,
+	): CapitalizeTextResponse {
+		const message = createBaseCapitalizeTextResponse();
+		message.result = object.result ?? "";
+		return message;
+	},
 };
 
 function createBaseReverseTextRequest(): ReverseTextRequest {
-  return { input: "" };
+	return { input: "" };
 }
 
 export const ReverseTextRequest = {
-  encode(message: ReverseTextRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.input !== "") {
-      writer.uint32(10).string(message.input);
-    }
-    return writer;
-  },
+	encode(
+		message: ReverseTextRequest,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.input !== "") {
+			writer.uint32(10).string(message.input);
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ReverseTextRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseReverseTextRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(
+		input: _m0.Reader | Uint8Array,
+		length?: number,
+	): ReverseTextRequest {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseReverseTextRequest();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.input = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.input = reader.string();
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): ReverseTextRequest {
-    return { input: isSet(object.input) ? globalThis.String(object.input) : "" };
-  },
+	fromJSON(object: any): ReverseTextRequest {
+		return {
+			input: isSet(object.input) ? globalThis.String(object.input) : "",
+		};
+	},
 
-  toJSON(message: ReverseTextRequest): unknown {
-    const obj: any = {};
-    if (message.input !== "") {
-      obj.input = message.input;
-    }
-    return obj;
-  },
+	toJSON(message: ReverseTextRequest): unknown {
+		const obj: any = {};
+		if (message.input !== "") {
+			obj.input = message.input;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<ReverseTextRequest>, I>>(base?: I): ReverseTextRequest {
-    return ReverseTextRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ReverseTextRequest>, I>>(object: I): ReverseTextRequest {
-    const message = createBaseReverseTextRequest();
-    message.input = object.input ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<ReverseTextRequest>, I>>(
+		base?: I,
+	): ReverseTextRequest {
+		return ReverseTextRequest.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<ReverseTextRequest>, I>>(
+		object: I,
+	): ReverseTextRequest {
+		const message = createBaseReverseTextRequest();
+		message.input = object.input ?? "";
+		return message;
+	},
 };
 
 function createBaseReverseTextResponse(): ReverseTextResponse {
-  return { result: "" };
+	return { result: "" };
 }
 
 export const ReverseTextResponse = {
-  encode(message: ReverseTextResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.result !== "") {
-      writer.uint32(10).string(message.result);
-    }
-    return writer;
-  },
+	encode(
+		message: ReverseTextResponse,
+		writer: _m0.Writer = _m0.Writer.create(),
+	): _m0.Writer {
+		if (message.result !== "") {
+			writer.uint32(10).string(message.result);
+		}
+		return writer;
+	},
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ReverseTextResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseReverseTextResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
+	decode(
+		input: _m0.Reader | Uint8Array,
+		length?: number,
+	): ReverseTextResponse {
+		const reader =
+			input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+		let end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseReverseTextResponse();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1:
+					if (tag !== 10) {
+						break;
+					}
 
-          message.result = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
+					message.result = reader.string();
+					continue;
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skipType(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): ReverseTextResponse {
-    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
-  },
+	fromJSON(object: any): ReverseTextResponse {
+		return {
+			result: isSet(object.result)
+				? globalThis.String(object.result)
+				: "",
+		};
+	},
 
-  toJSON(message: ReverseTextResponse): unknown {
-    const obj: any = {};
-    if (message.result !== "") {
-      obj.result = message.result;
-    }
-    return obj;
-  },
+	toJSON(message: ReverseTextResponse): unknown {
+		const obj: any = {};
+		if (message.result !== "") {
+			obj.result = message.result;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<ReverseTextResponse>, I>>(base?: I): ReverseTextResponse {
-    return ReverseTextResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ReverseTextResponse>, I>>(object: I): ReverseTextResponse {
-    const message = createBaseReverseTextResponse();
-    message.result = object.result ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<ReverseTextResponse>, I>>(
+		base?: I,
+	): ReverseTextResponse {
+		return ReverseTextResponse.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<ReverseTextResponse>, I>>(
+		object: I,
+	): ReverseTextResponse {
+		const message = createBaseReverseTextResponse();
+		message.result = object.result ?? "";
+		return message;
+	},
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+	| Date
+	| Function
+	| Uint8Array
+	| string
+	| number
+	| boolean
+	| undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+	? T
+	: T extends globalThis.Array<infer U>
+		? globalThis.Array<DeepPartial<U>>
+		: T extends ReadonlyArray<infer U>
+			? ReadonlyArray<DeepPartial<U>>
+			: T extends {}
+				? { [K in keyof T]?: DeepPartial<T[K]> }
+				: Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+	? P
+	: P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+			[K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+		};
 
 function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
+	return value !== null && value !== undefined;
 }

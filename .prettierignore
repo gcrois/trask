@@ -1,0 +1,11 @@
+# python cache
+__pycache__/
+.mypy_cache/
+*.pyc
+*.pyo
+
+# node modules
+node_modules/
+
+# build files
+dist/
