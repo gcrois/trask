@@ -117,6 +117,8 @@ export const Trask: React.FC<TraskProps> = (props) => {
 						</li>
 					))}
 				</ul>
+            </div>
+            <div>
 				<h2>Workers: {workers.size}</h2>
 				<ul>
 					{Array.from(workers).map(([id, worker]) => (
@@ -131,15 +133,19 @@ export const Trask: React.FC<TraskProps> = (props) => {
 						</li>
 					))}
 				</ul>
+            </div>
+            <div>
 				<h2>Output:</h2>
-				{completedTasks.map((id) => {
-					const task = queue.get(id);
-					return (
-						<p key={id}>
-							{id.split("-")[0]}: {task?.task.response.result}
-						</p>
-					);
-				})}
+                <ul>
+                    {completedTasks.map((id) => {
+                        const task = queue.get(id);
+                        return (
+                            <li key={id}>
+                                {id.split("-")[0]}: {task?.task.response.result}
+                            </li>
+                        );
+                    })}
+                </ul>
 			</div>
 		</Container>
 	);
