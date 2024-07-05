@@ -32,7 +32,17 @@ export const reverseText: LocalTask<"reverse"> = {
 	},
 };
 
+export type MultiplyIntegers = Task<"multiply">;
+export const multiplyIntegers: LocalTask<"multiply"> = {
+    execute: async (request) => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        console.log(request);
+        return { result: request!.a * request!.b };
+    },
+};
+
 export const localTasks = {
 	capitalize: capitalizeText,
 	reverse: reverseText,
+    multiply: multiplyIntegers,
 };

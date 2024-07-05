@@ -7,38 +7,29 @@ import {
 	secondaryVariant,
 } from "@app/styles/colors";
 
-export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ViewProps extends React.HTMLAttributes<HTMLDivElement> {
 	label: string | React.ReactNode;
 }
 
-const Container: React.FC<ContainerProps> = (props) => {
+export const View: React.FC<ViewProps> = (props) => {
 	const topHeight = "10px";
 	return (
 		<>
 			<div
 				{...{
 					...props,
-					className: props.className ? props.className : "container",
+					className: props.className ? props.className : "view",
 				}}
 				css={{
 					backgroundColor: primary,
 					color: onPrimary,
 
 					// Prevent margin collapse
-					margin: `${topHeight} 10px 10px 10px`,
 					padding: "10px",
 					position: "relative",
 
 					display: "grid",
 					gap: "1rem",
-
-					"&::before": {
-						content: "''",
-						backgroundColor: primaryVariant,
-						position: "absolute",
-						inset: `-${topHeight} -10px -10px -10px`,
-						zIndex: -1,
-					},
 
 					"input,button": {
 						border: 0,
@@ -66,5 +57,3 @@ const Container: React.FC<ContainerProps> = (props) => {
 		</>
 	);
 };
-
-export default Container;

@@ -14,6 +14,7 @@ class TaskRequest(betterproto.Message):
 
     capitalize: "CapitalizeTextRequest" = betterproto.message_field(1, group="task")
     reverse: "ReverseTextRequest" = betterproto.message_field(2, group="task")
+    multiply: "MultiplyIntegerRequest" = betterproto.message_field(3, group="task")
 
 
 @dataclass
@@ -27,6 +28,7 @@ class TaskResponse(betterproto.Message):
         1, group="response"
     )
     reverse: "ReverseTextResponse" = betterproto.message_field(2, group="response")
+    multiply: "MultiplyIntegerResponse" = betterproto.message_field(3, group="response")
 
 
 @dataclass
@@ -51,3 +53,16 @@ class ReverseTextRequest(betterproto.Message):
 @dataclass
 class ReverseTextResponse(betterproto.Message):
     result: str = betterproto.string_field(1)
+
+
+@dataclass
+class MultiplyIntegerRequest(betterproto.Message):
+    """Request and response definitions for multiplying integers"""
+
+    a: int = betterproto.int32_field(1)
+    b: int = betterproto.int32_field(2)
+
+
+@dataclass
+class MultiplyIntegerResponse(betterproto.Message):
+    result: int = betterproto.int32_field(1)

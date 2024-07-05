@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Container from "@app/components/structural/Container";
+import { View } from "@app/components/structural/View";
 
 import { TWorker, WebWorkerAdapter, APIWorker, WorkerId } from "@src/workers";
 import { Task, TaskType } from "@src/types";
@@ -18,9 +18,11 @@ interface TraskProps {
 const defaultEndpoint = "http://localhost:8000";
 
 export const Trask: React.FC<TraskProps> = (props) => {
-    const [tasks, _setTasks] = useState<TaskQueue>(props.queue || new TaskQueue());
+	const [tasks, _setTasks] = useState<TaskQueue>(
+		props.queue || new TaskQueue(),
+	);
 
-    const [input, setInput] = useState("");
+	const [input, setInput] = useState("");
 	const [apiEndpoint, setApiEndpoint] = useState("");
 	const [completedTasks, setCompletedTasks] = useState<string[]>([]);
 	const [workers, setWorkers] = useState<ReadonlyMap<string, TWorker>>(
@@ -66,7 +68,7 @@ export const Trask: React.FC<TraskProps> = (props) => {
 		});
 	};
 	return (
-		<Container label="Task Library Test">
+		<View label="Task Library Test">
 			<div>
 				<input
 					type="text"
@@ -88,6 +90,16 @@ export const Trask: React.FC<TraskProps> = (props) => {
 				>
 					Add Reverse Task
 				</button>
+                <button
+                    onClick={() =>
+                        addTask({
+                            name: "multiply",
+                            request: { a: 2, b: 3 },
+                        })
+                    }
+                >
+                    Add Multiply Task
+                </button>
 			</div>
 
 			<div>
@@ -117,8 +129,8 @@ export const Trask: React.FC<TraskProps> = (props) => {
 						</li>
 					))}
 				</ul>
-            </div>
-            <div>
+			</div>
+			<div>
 				<h2>Workers: {workers.size}</h2>
 				<ul>
 					{Array.from(workers).map(([id, worker]) => (
@@ -133,20 +145,20 @@ export const Trask: React.FC<TraskProps> = (props) => {
 						</li>
 					))}
 				</ul>
-            </div>
-            <div>
-				<h2>Output:</h2>
-                <ul>
-                    {completedTasks.map((id) => {
-                        const task = queue.get(id);
-                        return (
-                            <li key={id}>
-                                {id.split("-")[0]}: {task?.task.response.result}
-                            </li>
-                        );
-                    })}
-                </ul>
 			</div>
-		</Container>
+			<div>
+				<h2>Output:</h2>
+				<ul>
+					{completedTasks.map((id) => {
+						const task = queue.get(id);
+						return (
+							<li key={id}>
+								{id.split("-")[0]}: {task?.task.response.result}
+							</li>
+						);
+					})}
+				</ul>
+			</div>
+		</View>
 	);
 };

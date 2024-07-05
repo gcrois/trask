@@ -2,13 +2,12 @@ syntax = "proto3";
 
 package tasks;
 
-message 
-
 // Define a generic task request that can handle multiple types of tasks
 message TaskRequest {
     oneof task {
         CapitalizeTextRequest capitalize = 1;
         ReverseTextRequest reverse = 2;
+        MultiplyIntegerRequest multiply = 3;
         // Future tasks can be added here as new fields
     }
 }
@@ -18,6 +17,7 @@ message TaskResponse {
     oneof response {
         CapitalizeTextResponse capitalize = 1;
         ReverseTextResponse reverse = 2;
+        MultiplyIntegerResponse multiply = 3;
         // Future task responses can be added here as new fields
     }
 }
@@ -38,4 +38,14 @@ message ReverseTextRequest {
 
 message ReverseTextResponse {
     string result = 1;
+}
+
+// Request and response definitions for multiplying integers
+message MultiplyIntegerRequest {
+    int32 a = 1;
+    int32 b = 2;
+}
+
+message MultiplyIntegerResponse {
+    int32 result = 1;
 }
