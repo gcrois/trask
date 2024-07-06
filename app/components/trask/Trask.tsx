@@ -12,6 +12,7 @@ import {
 } from "@src/queue";
 
 interface TraskProps {
+    label: string;
 	queue?: TaskQueue;
 }
 
@@ -26,10 +27,10 @@ export const Trask: React.FC<TraskProps> = (props) => {
 	const [apiEndpoint, setApiEndpoint] = useState("");
 	const [completedTasks, setCompletedTasks] = useState<string[]>([]);
 	const [workers, setWorkers] = useState<ReadonlyMap<string, TWorker>>(
-		new Map(),
+		tasks.getWorkers(),
 	);
 	const [queue, setQueue] = useState<ReadonlyMap<string, QueuedTask>>(
-		new Map(),
+		tasks.getTasks(),
 	);
 
 	useEffect(() => {
@@ -68,7 +69,7 @@ export const Trask: React.FC<TraskProps> = (props) => {
 		});
 	};
 	return (
-		<View label="Task Library Test">
+		<View>
 			<div>
 				<input
 					type="text"
@@ -90,16 +91,16 @@ export const Trask: React.FC<TraskProps> = (props) => {
 				>
 					Add Reverse Task
 				</button>
-                <button
-                    onClick={() =>
-                        addTask({
-                            name: "multiply",
-                            request: { a: 2, b: 3 },
-                        })
-                    }
-                >
-                    Add Multiply Task
-                </button>
+				<button
+					onClick={() =>
+						addTask({
+							name: "multiply",
+							request: { a: 2, b: 3 },
+						})
+					}
+				>
+					Add Multiply Task
+				</button>
 			</div>
 
 			<div>

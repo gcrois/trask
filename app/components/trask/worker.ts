@@ -1,4 +1,4 @@
-import { localTasks, Task } from "@src/types";
+import { LocalTask, localTasks, Task } from "@src/types";
 
 self.onmessage = async function <T extends keyof typeof localTasks>(e: {
 	data: Task<T>;
@@ -6,7 +6,10 @@ self.onmessage = async function <T extends keyof typeof localTasks>(e: {
 	const { name, request } = e.data;
 
 	if (name in localTasks) {
-		const result = await localTasks[name].execute(request);
+		const result = await (
+			localTasks[name] as unknown as LocalTask<T>
+		).execute(request);
+
 		self.postMessage(result);
 	} else {
 		console.error(`Task ${name} not found`, e.data);
