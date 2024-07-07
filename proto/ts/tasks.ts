@@ -13,7 +13,6 @@ export const protobufPackage = "tasks";
 export interface TaskRequest {
 	capitalize?: CapitalizeTextRequest | undefined;
 	reverse?: ReverseTextRequest | undefined;
-	/** Future tasks can be added here as new fields */
 	multiply?: MultiplyIntegerRequest | undefined;
 }
 
@@ -21,7 +20,6 @@ export interface TaskRequest {
 export interface TaskResponse {
 	capitalize?: CapitalizeTextResponse | undefined;
 	reverse?: ReverseTextResponse | undefined;
-	/** Future task responses can be added here as new fields */
 	multiply?: MultiplyIntegerResponse | undefined;
 }
 

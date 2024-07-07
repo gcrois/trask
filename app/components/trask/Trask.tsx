@@ -12,7 +12,7 @@ import {
 } from "@src/queue";
 
 interface TraskProps {
-    label: string;
+	label: string;
 	queue?: TaskQueue;
 }
 
@@ -69,7 +69,7 @@ export const Trask: React.FC<TraskProps> = (props) => {
 		});
 	};
 	return (
-		<View>
+		<div>
 			<div>
 				<input
 					type="text"
@@ -160,6 +160,6 @@ export const Trask: React.FC<TraskProps> = (props) => {
 					})}
 				</ul>
 			</div>
-		</View>
+		</div>
 	);
 };

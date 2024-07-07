@@ -8,9 +8,6 @@ dependencies:
     "@emotion/react":
         specifier: ^11.11.4
         version: 11.11.4(@types/react@18.3.3)(react@18.3.1)
-    "@emotion/styled":
-        specifier: ^11.11.5
-        version: 11.11.5(@emotion/react@11.11.4)(@types/react@18.3.3)(react@18.3.1)
     "@types/uuid":
         specifier: ^10.0.0
         version: 10.0.0
@@ -23,6 +20,9 @@ dependencies:
     react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
+    react-spaces:
+        specifier: ^0.5.0
+        version: 0.5.0(react-dom@18.3.1)(react@18.3.1)
     ts-proto:
         specifier: ^1.181.0
         version: 1.181.0
@@ -484,15 +484,6 @@ packages:
             }
         dev: false
 
-    /@emotion/is-prop-valid@1.2.2:
-        resolution:
-            {
-                integrity: sha512-uNsoYd37AFmaCdXlg6EYD1KaPOaRWRByMCYzbKUX4+hhMfrxdVSelShywL4JVaAeM/eHUOSprYBQls+/neX3pw==,
-            }
-        dependencies:
-            "@emotion/memoize": 0.8.1
-        dev: false
-
     /@emotion/memoize@0.8.1:
         resolution:
             {
@@ -544,32 +535,6 @@ packages:
             {
                 integrity: sha512-0QBtGvaqtWi+nx6doRwDdBIzhNdZrXUppvTM4dtZZWEGTXL/XE/yJxLMGlDT1Gt+UHH5IX1n+jkXyytE/av7OA==,
             }
-        dev: false
-
-    /@emotion/styled@11.11.5(@emotion/react@11.11.4)(@types/react@18.3.3)(react@18.3.1):
-        resolution:
-            {
-                integrity: sha512-/ZjjnaNKvuMPxcIiUkf/9SHoG4Q196DRl1w82hQ3WCsjo1IUR8uaGWrC6a87CrYAW0Kb/pK7hk8BnLgLRi9KoQ==,
-            }
-        peerDependencies:
-            "@emotion/react": ^11.0.0-rc.0
-            "@types/react": "*"
-            react: ">=16.8.0"
-        peerDependenciesMeta:
-            "@types/react":
-                optional: true
-        dependencies:
-            "@babel/runtime": 7.24.7
-            "@emotion/babel-plugin": 11.11.0
-            "@emotion/is-prop-valid": 1.2.2
-            "@emotion/react": 11.11.4(@types/react@18.3.3)(react@18.3.1)
-            "@emotion/serialize": 1.1.4
-            "@emotion/use-insertion-effect-with-fallbacks": 1.0.1(react@18.3.1)
-            "@emotion/utils": 1.2.1
-            "@types/react": 18.3.3
-            react: 18.3.1
-        transitivePeerDependencies:
-            - supports-color
         dev: false
 
     /@emotion/unitless@0.8.1:
@@ -1923,6 +1888,13 @@ packages:
             which: 2.0.2
         dev: true
 
+    /css-element-queries@1.2.3:
+        resolution:
+            {
+                integrity: sha512-QK9uovYmKTsV2GXWQiMOByVNrLn2qz6m3P7vWpOR4IdD6I3iXoDw5qtgJEN3Xq7gIbdHVKvzHjdAtcl+4Arc4Q==,
+            }
+        dev: false
+
     /css-functions-list@3.2.2:
         resolution:
             {
@@ -2953,6 +2925,14 @@ packages:
         engines: { node: ">=0.10.0" }
         dev: true
 
+    /object-assign@4.1.1:
+        resolution:
+            {
+                integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==,
+            }
+        engines: { node: ">=0.10.0" }
+        dev: false
+
     /once@1.4.0:
         resolution:
             {
@@ -3155,6 +3135,17 @@ packages:
         hasBin: true
         dev: true
 
+    /prop-types@15.8.1:
+        resolution:
+            {
+                integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==,
+            }
+        dependencies:
+            loose-envify: 1.4.0
+            object-assign: 4.1.1
+            react-is: 16.13.1
+        dev: false
+
     /protobufjs@7.3.2:
         resolution:
             {
@@ -3219,6 +3210,21 @@ packages:
             }
         engines: { node: ">=0.10.0" }
         dev: true
+
+    /react-spaces@0.5.0(react-dom@18.3.1)(react@18.3.1):
+        resolution:
+            {
+                integrity: sha512-pCC1a3RNYPwSN7WDChEgN/vaE0JMBwhNNp+3mOLq4V9QE1Mmw9Vo69Y8edPlRKNG8k8iRHIY3PKA1dd/+pPluA==,
+            }
+        peerDependencies:
+            react: ^16.8.0 || ^17 || ^18
+            react-dom: ^16.8.0 || ^17 || ^18
+        dependencies:
+            css-element-queries: 1.2.3
+            prop-types: 15.8.1
+            react: 18.3.1
+            react-dom: 18.3.1(react@18.3.1)
+        dev: false
 
     /react@18.3.1:
         resolution:

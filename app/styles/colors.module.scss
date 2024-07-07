@@ -1,21 +1,50 @@
-// primary color is for main elements
-$primary: #9fd098;
-$primary-variant: #4f9444;
+// // primary color is for main elements
+// $primary: #9fd098;
+// $primary-variant: #4f9444;
+// $on-primary: #ffffff;
+
+// // secondary color is for alternative elements
+// $secondary: #c488da;
+// $secondary-variant: #912e91;
+// $on-secondary: #373737;
+
+// // background color is the background of the app
+// $background: #d8e6ea;
+// $on-background: #373737;
+// $surface: $background;
+// $on-surface: $on-background;
+
+// // error color is for error messages
+// $error: #dc3545;
+// $on-error: #ffffff;
+
+// https://coolors.co/aa8e83-9d6fd1-fabd40-ff68bf-f3dcbf
+
+/* SCSS HEX */
+$beaver: #aa8e83ff;
+$amethyst: #9d6fd1ff;
+$xanthous: #fabd40ff;
+$hot-pink: #ff68bfff;
+$champagne: #f3dcbfff;
+
+// map to material design colors
+$primary: $amethyst;
+$primary-variant: $hot-pink;
 $on-primary: #ffffff;
 
 // secondary color is for alternative elements
-$secondary: #c488da;
-$secondary-variant: #912e91;
+$secondary: $xanthous;
+$secondary-variant: $hot-pink;
 $on-secondary: #373737;
 
 // background color is the background of the app
-$background: #d8e6ea;
+$background: $champagne;
 $on-background: #373737;
 $surface: $background;
 $on-surface: $on-background;
 
 // error color is for error messages
-$error: #dc3545;
+$error: $beaver;
 $on-error: #ffffff;
 
 /* stylelint-disable selector-pseudo-class-no-unknown, property-no-unknown */

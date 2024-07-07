@@ -24,4 +24,8 @@ export default defineConfig({
 			"@proto": path.resolve(__dirname, "./proto/ts"),
 		},
 	},
+	define: {
+		"import.meta.env.VITE_BUILD_DATE": new Date(),
+        "import.meta.env.VITE_APP_VERSION": JSON.stringify(process.env.npm_package_version),
+	},
 });
