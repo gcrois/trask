@@ -85,13 +85,13 @@ export const View: React.FC<ViewProps> = (props) => {
 					inset: 0,
 
 					boxSizing: "border-box",
-                    clipPath: `polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px)`,
+					clipPath: `polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px)`,
 
 					display: "grid",
 					gap: "1rem",
 					margin: "20px",
-					overflow: "auto"
-                }}
+					overflow: "auto",
+				}}
 			>
 				{props.children}
 			</div>

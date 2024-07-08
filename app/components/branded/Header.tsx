@@ -5,6 +5,7 @@ import {
 	primaryVariant,
 	secondary,
 	secondaryVariant,
+	background,
 } from "@app/styles/colors";
 
 interface HeaderProps {
@@ -21,7 +22,7 @@ const FancyLink = ({ href, display }: { href: string; display: string }) => {
 			css={{
 				color: onPrimary,
 				position: "relative",
-				backgroundColor: primary,
+				backgroundColor: background,
 				padding: "0.1rem 0.2rem 0 0.1rem",
 				boxSizing: "border-box",
 				width: "100%",

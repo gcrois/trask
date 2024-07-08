@@ -42,12 +42,12 @@ export const Queue: React.FC<QueueComponentProps> = ({ queue }) => {
 	return (
 		<div>
 			<h2>Queue:</h2>
-            {Array.from(queuedTasks.entries()).map(([id, task]) => {
-                if (task.status === QueuedTaskStatus.Resolved) {
-                    return null;
-                }
-                return <TaskComponent key={id} id={id} task={task} />;
-            })}
+			{Array.from(queuedTasks.entries()).map(([id, task]) => {
+				if (task.status === QueuedTaskStatus.Resolved) {
+					return null;
+				}
+				return <TaskComponent key={id} id={id} task={task} />;
+			})}
 
 			<h2>Output:</h2>
 			{completedTasks.map((id) => {
