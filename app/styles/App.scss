@@ -31,7 +31,33 @@ body {
 	user-select: none;
 }
 
-a, a:visited {
-    color: unset;
-    text-decoration: none;
+a,
+a:visited {
+	color: white;
+	text-decoration: none;
+}
+
+input,
+button {
+	font-family: Voltaire, sans-serif;
+	font-size: 12px;
+	font-weight: 300;
+	border: 0;
+	color: $on-secondary;
+	margin: 0.1em;
+}
+
+button {
+	background-color: $secondary;
+	cursor: pointer;
+	padding: 0.5em;
+
+	&:hover {
+		filter: brightness(1.1);
+	}
+}
+
+input {
+	background-color: $surface;
+	border: 0.45em solid $secondary;
 }

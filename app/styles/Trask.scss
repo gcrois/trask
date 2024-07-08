@@ -1,0 +1,120 @@
+.worker-card {
+	background-color: #f0f0f0;
+	border-radius: 8px;
+	padding: 12px;
+	margin-bottom: 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.worker-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.worker-id {
+	font-weight: bold;
+}
+
+.worker-status {
+	font-size: 0.9em;
+}
+
+.worker-status.waiting {
+	color: #f39c12;
+}
+
+.worker-status.busy {
+	color: #e74c3c;
+}
+
+.worker-status.idle {
+	color: #2ecc71;
+}
+
+.worker-actions button {
+	margin-left: 8px;
+	padding: 6px 12px;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.task-card {
+	background-color: #f0f0f0;
+	border-radius: 8px;
+	padding: 12px;
+	margin-bottom: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.task-info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.task-id {
+	font-weight: bold;
+}
+
+.task-name {
+	font-style: italic;
+}
+
+.task-status {
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 0.9em;
+}
+
+.task-status.queued {
+	background-color: #f39c12;
+	color: white;
+}
+.task-status.in-progress {
+	background-color: #3498db;
+	color: white;
+}
+.task-status.completed {
+	background-color: #2ecc71;
+	color: white;
+}
+.task-status.failed {
+	background-color: #e74c3c;
+	color: white;
+}
+
+.task-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	font-size: 0.9em;
+}
+
+.task-worker,
+.task-time {
+	background-color: #e0e0e0;
+	padding: 2px 6px;
+	border-radius: 4px;
+}
+
+.task-output {
+	background-color: #e8f0fe;
+	padding: 8px;
+	border-radius: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.output-label {
+	font-weight: bold;
+}
+
+.output-value {
+	word-break: break-all;
+}

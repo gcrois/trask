@@ -21,8 +21,6 @@ export interface ViewProps extends React.HTMLAttributes<HTMLDivElement> {
 	size?: string;
 }
 
-import { v3, v4 } from "uuid";
-
 const shadowOffset = "5px 5px 0px";
 
 export const View: React.FC<ViewProps> = (props) => {
@@ -60,7 +58,6 @@ export const View: React.FC<ViewProps> = (props) => {
 					filter: `drop-shadow(${shadowOffset} ${secondary}) drop-shadow(${shadowOffset} ${primaryVariant}) drop-shadow(3px 3px 3px rgba(0, 0, 0, 0.5))`,
 					position: "absolute",
 					inset: 0,
-					// transform: `rotate(${rot}deg)`,
 					transformOrigin: "center",
 				}}
 			>
@@ -88,36 +85,14 @@ export const View: React.FC<ViewProps> = (props) => {
 					inset: 0,
 
 					boxSizing: "border-box",
+                    clipPath: `polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px)`,
 
 					display: "grid",
 					gap: "1rem",
 					margin: "20px",
-
-					// // clipPath: "polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%)",
-					// // 20px bevel
-
-					// "input,button": {
-					// 	border: 0,
-					// 	backgroundColor: secondary,
-					// 	color: onPrimary,
-					// 	padding: "0.5rem",
-					// },
-
-					// "> div": {
-					// 	display: "flex",
-					// 	gap: "1rem",
-					// 	alignItems: "center",
-					// 	width: "100%",
-					// 	minWidth: "0",
-					// 	zIndex: 2,
-					// },
-
-					// "@media (max-width: 600px)": {
-					// 	gridTemplateColumns: "1fr",
-					// },
-				}}
+					overflow: "auto"
+                }}
 			>
-				{new Date().getTime()}
 				{props.children}
 			</div>
 		</Resizable>
