@@ -22,6 +22,10 @@ def add(a: int, b: int) -> int:
     return a + b
 
 @proto
+def multiply_integer(a: int, b: int) -> int:
+    return a * b
+
+@proto
 def subtract(a: int, b: int) -> int:
     return a - b
 
@@ -124,10 +128,9 @@ def parse_message_fields(node) -> Dict[str, str]:
                 print("Warning: 'type' or 'name' field is missing in field_definition node.")
     return fields
 
-def generate_protobuf_definitions(functions: List[Callable]) -> Tuple[Dict[str, Dict[str, str]], Dict[str, Dict[str, str]], str]:
+def generate_function_dict(functions: List[Callable]) -> Tuple[Dict[str, Dict[str, str]], Dict[str, Dict[str, str]]]:
     new_requests = {}
     new_responses = {}
-    proto_definitions = ""
     task_request_oneof = "message TaskRequest {\n oneof task {\n"
     task_response_oneof = "message TaskResponse {\n oneof response {\n"
 
@@ -140,15 +143,41 @@ def generate_protobuf_definitions(functions: List[Callable]) -> Tuple[Dict[str, 
         new_requests[func_name] = request_fields
         new_responses[func_name] = response_fields
 
-        proto_definitions += request_message + response_message
         task_request_oneof += f" {func_name}Request {func.__name__} = {idx};\n"
         task_response_oneof += f" {func_name}Response {func.__name__} = {idx};\n"
 
     task_request_oneof += " }\n}\n"
     task_response_oneof += " }\n}\n"
-    proto_definitions += task_request_oneof + task_response_oneof
 
-    return new_requests, new_responses, proto_definitions
+    return new_requests, new_responses
+
+def generate_protobuf_definitions(functions: Tuple[Dict[str, Dict[str, str]], Dict[str, Dict[str, str]]]) -> str:
+    proto_definitions = ""
+    task_request_oneof = "message TaskRequest {\n oneof task {\n"
+    task_response_oneof = "message TaskResponse {\n oneof response {\n"
+    
+    for idx, (func_name, request_fields) in enumerate(functions[0].items(), start=1):
+        request_message = f"message {func_name}Request {{\n"
+        for field_name, field_type in request_fields.items():
+            request_message += f" {field_type} {field_name} = {idx};\n"
+        request_message += "}\n\n"
+        proto_definitions += request_message
+        task_request_oneof += f" {func_name}Request {func_name} = {idx};\n"
+        
+    for idx, (func_name, response_fields) in enumerate(functions[1].items(), start=1):
+        response_message = f"message {func_name}Response {{\n"
+        for field_name, field_type in response_fields.items():
+            response_message += f" {field_type} {field_name} = {idx};\n"
+        response_message += "}\n\n"
+        proto_definitions += response_message
+        task_response_oneof += f" {func_name}Response {func_name} = {idx};\n"
+        
+    task_request_oneof += " }\n}\n"
+    task_response_oneof += " }\n}\n"
+    
+    proto_definitions += task_request_oneof + task_response_oneof
+    
+    return proto_definitions
 
 def generate_message_definitions(func_name: str, sig: inspect.Signature) -> Tuple[str, str, Dict[str, str], Dict[str, str]]:
     request_message, request_fields = generate_new_request_message(func_name, sig)
@@ -202,22 +231,14 @@ if __name__ == "__main__":
     existing_content = read_protobuf_file(file_path)
     package, existing_requests, existing_responses = parse_existing_definitions(existing_content)
     print(existing_requests)
-    new_requests, new_responses, proto_definitions = generate_protobuf_definitions(functions)
-    print(new_requests)
+    new_requests, new_responses = generate_function_dict(functions)
     
     try:
         combined_requests, combined_responses = combine_and_verify_definitions(
             existing_requests, existing_responses, new_requests, new_responses)
         
-        # Regenerate proto_definitions with combined definitions
-        _, _, proto_definitions = generate_protobuf_definitions(functions)
-        
-        # Add syntax and package declaration
-        proto_definitions = f"syntax = \"proto3\";\n\npackage {package};\n\n" + proto_definitions
+        print(generate_protobuf_definitions((combined_requests, combined_responses)))
 
-        print(proto_definitions)
-        # update_protobuf_file(file_path, proto_definitions)
-        # print("Protobuf file updated successfully.")
     except ValueError as e:
         print(f"Error: {e}")
         print("Protobuf file was not updated due to inconsistencies.")
