@@ -2,67 +2,43 @@
 # sources: tasks.proto
 # plugin: python-betterproto
 from dataclasses import dataclass
+from typing import List
 
 import betterproto
 
 
 @dataclass
-class TaskRequest(betterproto.Message):
-    """
-    Define a generic task request that can handle multiple types of tasks
-    """
+class Text2textRequest(betterproto.Message):
+    messages: List[str] = betterproto.string_field(1)
+    max_tokens: int = betterproto.int32_field(2)
+    client: str = betterproto.string_field(3)
 
-    capitalize: "CapitalizeTextRequest" = betterproto.message_field(1, group="task")
-    reverse: "ReverseTextRequest" = betterproto.message_field(2, group="task")
-    multiply: "MultiplyIntegerRequest" = betterproto.message_field(3, group="task")
+
+@dataclass
+class Text2imageRequest(betterproto.Message):
+    prompt: str = betterproto.string_field(1)
+    n: int = betterproto.int32_field(2)
+    size: str = betterproto.string_field(3)
+    client: str = betterproto.string_field(4)
+
+
+@dataclass
+class Text2textResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2imageResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class TaskRequest(betterproto.Message):
+    text2text: "Text2textRequest" = betterproto.message_field(1, group="task")
+    text2image: "Text2imageRequest" = betterproto.message_field(2, group="task")
 
 
 @dataclass
 class TaskResponse(betterproto.Message):
-    """
-    Define a generic task response that can handle multiple types of task
-    responses
-    """
-
-    capitalize: "CapitalizeTextResponse" = betterproto.message_field(
-        1, group="response"
-    )
-    reverse: "ReverseTextResponse" = betterproto.message_field(2, group="response")
-    multiply: "MultiplyIntegerResponse" = betterproto.message_field(3, group="response")
-
-
-@dataclass
-class CapitalizeTextRequest(betterproto.Message):
-    """Request and response definitions for capitalizing text"""
-
-    input: str = betterproto.string_field(1)
-
-
-@dataclass
-class CapitalizeTextResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class ReverseTextRequest(betterproto.Message):
-    """Request and response definitions for reversing text"""
-
-    input: str = betterproto.string_field(1)
-
-
-@dataclass
-class ReverseTextResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class MultiplyIntegerRequest(betterproto.Message):
-    """Request and response definitions for multiplying integers"""
-
-    a: int = betterproto.int32_field(1)
-    b: int = betterproto.int32_field(2)
-
-
-@dataclass
-class MultiplyIntegerResponse(betterproto.Message):
-    result: int = betterproto.int32_field(1)
+    text2text: "Text2textResponse" = betterproto.message_field(1, group="response")
+    text2image: "Text2imageResponse" = betterproto.message_field(2, group="response")

@@ -36,33 +36,16 @@ async def execute_task(data: TaskRequest):
     if task_type == "capitalize":
         input_text = parsed["capitalize"]["input"]
         result = input_text.upper()
+        
         return TaskResponse(capitalize=CapitalizeTextResponse(result=result))
-        # response = CapitalizeTextResponse(result=result)
+
     elif task_type == "reverse":
         input_text = parsed["reverse"]["input"]
         result = input_text[::-1]
+        
         return TaskResponse(reverse=ReverseTextResponse(result=result))
-        # response = ReverseTextResponse(result=result)
     else:
         raise HTTPException(status_code=400, detail="Unknown task type")
-    
-    # return TaskResponse(**{task_type: response})
-    # for key in data.to_dict().keys():
-    #     print(key)
-    # if not data.taskName or not data.input:
-    #     raise HTTPException(status_code=400, detail="taskName and input are required")
-
-    # task_name = data.taskName
-    # input_text = data.input.input
-
-    # if task_name == "capitalize":
-    #     result = input_text.upper()
-    # elif task_name == "reverse":
-    #     result = input_text[::-1]
-    # else:
-    #     raise HTTPException(status_code=400, detail="Unknown task")
-    
-    # return {"result": result}
 
 if __name__ == "__main__":
     import uvicorn
