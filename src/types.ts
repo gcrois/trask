@@ -1,10 +1,8 @@
-import type {
-	TaskRequest,
-	TaskResponse,
-} from "@proto/tasks";
+import type { TaskRequest, TaskResponse } from "@proto/tasks";
 
 export type TaskType = keyof TaskRequest & keyof TaskResponse;
 export interface Task<T extends TaskType> {
+	id: string;
 	name: T;
 	request: TaskRequest[T] & object;
 	response?: TaskResponse[T] & object;

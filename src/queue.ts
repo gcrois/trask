@@ -14,12 +14,12 @@ export enum QueuedTaskStatus {
 export enum TaskQueueEvent {
 	QueueChange = "queueChange",
 	WorkerChange = "workerChange",
+	TaskUpdate = "taskUpdate",
 }
 
 type QueueId = string;
 
 export interface QueuedTask<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	T extends TaskType = any,
 	Input = Task<T>["request"] & object,
 	Output = Task<T>["response"] & object,
@@ -38,11 +38,14 @@ export interface QueuedTask<
 }
 
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
+type TaskUpdateListener = (taskId: string, update: any) => void;
 
 export class TaskQueue {
 	private tasks: Map<string, QueuedTask> = new Map();
 	private workers: Map<string, TWorker> = new Map();
-	private listeners: { [key: string]: TasksListener[] } = {};
+	private listeners: {
+		[key: string]: (TasksListener | TaskUpdateListener)[];
+	} = {};
 
 	addWorker(worker: TWorker): void {
 		this.workers.set(worker.id, worker);
@@ -65,7 +68,6 @@ export class TaskQueue {
 			: Promise.reject("Task not found");
 	}
 
-	// addTask<Input, Output>(task: TaskType<Input, Output>, input: Input): string {
 	addTask<
 		T extends TaskType,
 		Input = Task<T>["request"] & object,
@@ -87,7 +89,7 @@ export class TaskQueue {
 			this.tasks.set(id, {
 				id,
 				timestamp,
-				task,
+				task: { ...task, id },
 				resolve,
 				reject,
 				status,
@@ -102,7 +104,7 @@ export class TaskQueue {
 				if (queuedTask) {
 					this.tasks.set(id, {
 						...queuedTask,
-						task: { ...task, response },
+						task: { ...task, id, response },
 						status: QueuedTaskStatus.Resolved,
 						endTime: Date.now(),
 					});
@@ -159,14 +161,18 @@ export class TaskQueue {
 		return this.tasks;
 	}
 
-	on(event: TaskQueueEvent, callback: TasksListener) {
+	handleIncrementalUpdate(taskId: string, update: any) {
+		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
+	}
+
+	on(event: TaskQueueEvent, callback: TasksListener | TaskUpdateListener) {
 		if (!this.listeners[event]) {
 			this.listeners[event] = [];
 		}
 		this.listeners[event].push(callback);
 	}
 
-	off(event: TaskQueueEvent, callback: TasksListener) {
+	off(event: TaskQueueEvent, callback: TasksListener | TaskUpdateListener) {
 		if (this.listeners[event]) {
 			this.listeners[event] = this.listeners[event].filter(
 				(cb) => cb !== callback,
@@ -174,7 +180,13 @@ export class TaskQueue {
 		}
 	}
 
-	emit(event: TaskQueueEvent) {
-		this.listeners[event]?.forEach((callback) => callback(this.tasks));
+	emit(event: TaskQueueEvent, ...args: any[]) {
+		this.listeners[event]?.forEach((callback) => {
+			if (event === TaskQueueEvent.TaskUpdate) {
+				(callback as TaskUpdateListener)(args[0], args[1]);
+			} else {
+				(callback as TasksListener)(this.tasks);
+			}
+		});
 	}
 }
