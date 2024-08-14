@@ -20,8 +20,9 @@ export enum TaskQueueEvent {
 type QueueId = string;
 
 export interface QueuedTask<
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	T extends TaskType = any,
-	Input = Task<T>["request"] & object,
+	_Input = Task<T>["request"] & object,
 	Output = Task<T>["response"] & object,
 > {
 	id: QueueId;
@@ -38,7 +39,14 @@ export interface QueuedTask<
 }
 
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
-type TaskUpdateListener = (taskId: string, update: any) => void;
+type TaskUpdateListener = <
+	T extends TaskType,
+	_Input = Task<T>["request"] & object,
+	Output = Task<T>["response"] & object,
+>(
+	taskId: string,
+	update: Output,
+) => void;
 
 export class TaskQueue {
 	private tasks: Map<string, QueuedTask> = new Map();
@@ -53,6 +61,7 @@ export class TaskQueue {
 	}
 
 	removeWorker(workerId: string) {
+		this.workers.get(workerId)?.dispose();
 		this.workers.delete(workerId);
 		this.emit(TaskQueueEvent.WorkerChange);
 	}
@@ -161,7 +170,11 @@ export class TaskQueue {
 		return this.tasks;
 	}
 
-	handleIncrementalUpdate(taskId: string, update: any) {
+	handleIncrementalUpdate<
+		T extends TaskType,
+		_Input = Task<T>["request"] & object,
+		Output = Task<T>["response"] & object,
+	>(taskId: string, update: Output) {
 		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
 	}
 
@@ -180,6 +193,7 @@ export class TaskQueue {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	emit(event: TaskQueueEvent, ...args: any[]) {
 		this.listeners[event]?.forEach((callback) => {
 			if (event === TaskQueueEvent.TaskUpdate) {

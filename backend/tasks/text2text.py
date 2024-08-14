@@ -1,26 +1,19 @@
 from protobuf_generator import proto
 from tasks.openai_client import client
-from typing import List, Tuple, Callable, Any
+from typing import List, Tuple, Callable, Awaitable
 from functools import wraps
 
 def noop(*args, **kwargs):
+    print("Noop called", args, kwargs)
     pass
 
-def with_updates(func):
-    @wraps(func)
-    def wrapper(*args, send_update: Callable[[Any], None] = noop, **kwargs):
-        if send_update is None:
-            send_update = lambda _: None  # No-op if no send_update provided
-        
-        def wrapped_send_update(update):
-            send_update(update)
-        
-        return func(*args, send_update=wrapped_send_update, **kwargs)
-    return wrapper
-
 @proto
-@with_updates
-def text2text(messages: List[Tuple[str, str]], max_tokens: int = 100, client=client, send_update: Callable[[str], None] = noop) -> str:
+async def text2text(
+    messages: List[Tuple[str, str]],
+    max_tokens: int = 100,
+    client = client,
+    send_update: Callable[[str], Awaitable[None]] = noop
+) -> str:
     """
     Generate text based on a given list of messages.
     :param messages: A list of tuples, where each tuple contains (role, content)
@@ -36,7 +29,7 @@ def text2text(messages: List[Tuple[str, str]], max_tokens: int = 100, client=cli
         formatted_messages.append({"role": role, "content": content})
         # send_update(f"Processing message: {role}")
 
-    send_update("Sending request to OpenAI")
+    await send_update("Sending request to OpenAI")
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=formatted_messages,
@@ -44,9 +37,7 @@ def text2text(messages: List[Tuple[str, str]], max_tokens: int = 100, client=cli
     )
     
     if not response.choices[0].message.content:
-        send_update("Error: No response from the model")
         return "ERROR: No response from the model."
     else:
         result = response.choices[0].message.content
-        send_update("Received response from OpenAI")
         return result

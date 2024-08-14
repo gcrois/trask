@@ -26,6 +26,7 @@ class HandshakeData(BaseModel):
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
     active_connections[client_id] = websocket
+    print(f"Client {client_id} connected, active connections: {len(active_connections)}")
     try:
         while True:
             data = await websocket.receive_json()
@@ -38,13 +39,14 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     response_class = getattr(proto_tasks, f"{task_type.capitalize()}Response")
                     
                     async def send_update(update):
+                        wrapped = response_class(result=update)            
                         await websocket.send_json({
                             'type': 'incrementalUpdate',
                             'taskId': task_id,
-                            'update': update
+                            'update': proto_tasks.TaskResponse(**{task_type: wrapped}).to_dict()
                         })
 
-                    result = task_func(send_update=send_update, **task_data)
+                    result = await task_func(**task_data, send_update=send_update)
                     task_response = response_class(result=result)
                     await websocket.send_json({
                         'type': 'result',
@@ -64,4 +66,4 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="debug")
+    uvicorn.run(app, host="127.0.0.1", port=8000)

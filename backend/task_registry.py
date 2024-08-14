@@ -2,9 +2,9 @@
 
 import importlib
 import os
-from typing import Dict, Callable
+from typing import Dict, Awaitable
 
-def load_tasks() -> Dict[str, Callable]:
+def load_tasks() -> Dict[str, Awaitable]:
     tasks = {}
     tasks_dir = os.path.dirname("./tasks/")
     for filename in os.listdir(tasks_dir):

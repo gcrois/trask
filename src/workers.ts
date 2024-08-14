@@ -27,6 +27,7 @@ export interface TWorker {
 	requestJob: () => boolean;
 	setMessage: (message: string) => void;
 	setStatus: (status: WorkerStatus) => void;
+	dispose: () => void;
 }
 
 abstract class BaseWorker implements TWorker {
@@ -55,6 +56,8 @@ abstract class BaseWorker implements TWorker {
 	abstract execute<T extends TaskType>(
 		task: Task<T>,
 	): Promise<Task<T>["response"]>;
+
+	abstract dispose: () => void;
 
 	requestJob(): boolean {
 		if (
@@ -148,16 +151,22 @@ export class WebWorkerAdapter extends BaseWorker {
 			this.worker.postMessage({ type: "execute", task });
 		});
 	}
+
+	dispose = () => {
+		console.log(`Disposing webworker ${this.id}`);
+		this.worker.terminate();
+	};
 }
 
 export class APIWorker extends BaseWorker {
 	private ws: WebSocket;
+	// eslint-disable-next-line @typescript-eslint/ban-types
 	private taskPromises: Map<string, { resolve: Function; reject: Function }> =
 		new Map();
 
 	constructor(wsEndpoint: string, taskQueue: TaskQueue) {
 		super(taskQueue);
-		this.ws = new WebSocket(wsEndpoint);
+		this.ws = new WebSocket(new URL(this.id, wsEndpoint));
 
 		this.ws.onopen = () => {
 			console.log("WebSocket connection established");
@@ -167,6 +176,7 @@ export class APIWorker extends BaseWorker {
 		this.ws.onmessage = (event) => {
 			const message = JSON.parse(event.data);
 			if (message.type === "incrementalUpdate") {
+				console.log("Received incremental update", message);
 				this.taskQueue.handleIncrementalUpdate(
 					message.taskId,
 					message.update,
@@ -216,4 +226,9 @@ export class APIWorker extends BaseWorker {
 			);
 		});
 	}
+
+	dispose = () => {
+		console.log(`Disposing API worker ${this.id}`);
+		this.ws.close();
+	};
 }
