@@ -1,37 +1,48 @@
 syntax = "proto3";
 
-package tasks;
-
-message Text2textRequest {
- repeated string messages = 1;
- int32 maxTokens = 2;
- string client = 3;
-}
+package ai_tasks;
 
 message Text2imageRequest {
  string prompt = 1;
  int32 n = 2;
  string size = 3;
- string client = 4;
 }
 
-message Text2textResponse {
- string result = 1;
+message Text2textRequest {
+ repeated string messages = 1;
+ int32 maxTokens = 2;
+}
+
+message Text2audioRequest {
+ string prompt = 1;
+ int32 duration = 2;
+ int32 steps = 3;
+ float cfgScale = 4;
 }
 
 message Text2imageResponse {
  string result = 1;
 }
 
+message Text2textResponse {
+ string result = 1;
+}
+
+message Text2audioResponse {
+ string result = 1;
+}
+
 message TaskRequest {
  oneof task {
- Text2textRequest text2text = 1;
- Text2imageRequest text2image = 2;
+ Text2imageRequest text2image = 1;
+ Text2textRequest text2text = 2;
+ Text2audioRequest text2audio = 3;
  }
 }
 message TaskResponse {
  oneof response {
- Text2textResponse text2text = 1;
- Text2imageResponse text2image = 2;
+ Text2imageResponse text2image = 1;
+ Text2textResponse text2text = 2;
+ Text2audioResponse text2audio = 3;
  }
 }

@@ -1,4 +1,0 @@
-fastapi
-uvicorn
-tree-sitter
-git+https://github.com/rewinfrey/tree-sitter-proto.git@rewinfrey/bump-tree-sitter-22.6#egg=tree-sitter-proto

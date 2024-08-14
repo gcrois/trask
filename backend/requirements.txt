@@ -1,0 +1,8 @@
+fastapi
+pydantic
+tree_sitter
+openai
+git+https://github.com/coder3101/tree-sitter-proto
+betterproto
+uvicorn[standard]
+stable_audio_tools
