@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "definitions.proto";
+
+message CapitalizeRequest {
+  string text = 1;
+}
+
+message CapitalizeResponse {
+  string result = 1;
+}
+
+message TaskRequest {
+  oneof task {
+    CapitalizeRequest capitalize = 1;
+  }
+}
+
+message TaskResponse {
+  oneof response {
+    CapitalizeResponse capitalize = 1;
+  }
+}

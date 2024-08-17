@@ -6,73 +6,46 @@
 
 /* eslint-disable */
 import * as _m0 from "protobufjs/minimal";
+import { FileReference } from "./definitions";
 
-export const protobufPackage = "ai_tasks";
+export const protobufPackage = "";
 
-export interface Text2imageRequest {
-  prompt: string;
-  n: number;
-  size: string;
+export interface CapitalizeRequest {
+  text: string;
+  file: FileReference | undefined;
 }
 
-export interface Text2textRequest {
-  messages: string[];
-  maxTokens: number;
-}
-
-export interface Text2audioRequest {
-  prompt: string;
-  duration: number;
-  steps: number;
-  cfgScale: number;
-}
-
-export interface Text2imageResponse {
-  result: string;
-}
-
-export interface Text2textResponse {
-  result: string;
-}
-
-export interface Text2audioResponse {
+export interface CapitalizeResponse {
   result: string;
 }
 
 export interface TaskRequest {
-  text2image?: Text2imageRequest | undefined;
-  text2text?: Text2textRequest | undefined;
-  text2audio?: Text2audioRequest | undefined;
+  capitalize?: CapitalizeRequest | undefined;
 }
 
 export interface TaskResponse {
-  text2image?: Text2imageResponse | undefined;
-  text2text?: Text2textResponse | undefined;
-  text2audio?: Text2audioResponse | undefined;
+  capitalize?: CapitalizeResponse | undefined;
 }
 
-function createBaseText2imageRequest(): Text2imageRequest {
-  return { prompt: "", n: 0, size: "" };
+function createBaseCapitalizeRequest(): CapitalizeRequest {
+  return { text: "", file: undefined };
 }
 
-export const Text2imageRequest = {
-  encode(message: Text2imageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.prompt !== "") {
-      writer.uint32(10).string(message.prompt);
+export const CapitalizeRequest = {
+  encode(message: CapitalizeRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
     }
-    if (message.n !== 0) {
-      writer.uint32(16).int32(message.n);
-    }
-    if (message.size !== "") {
-      writer.uint32(26).string(message.size);
+    if (message.file !== undefined) {
+      FileReference.encode(message.file, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2imageRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CapitalizeRequest {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2imageRequest();
+    const message = createBaseCapitalizeRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -81,21 +54,14 @@ export const Text2imageRequest = {
             break;
           }
 
-          message.prompt = reader.string();
+          message.text = reader.string();
           continue;
         case 2:
-          if (tag !== 16) {
+          if (tag !== 18) {
             break;
           }
 
-          message.n = reader.int32();
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.size = reader.string();
+          message.file = FileReference.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -106,234 +72,53 @@ export const Text2imageRequest = {
     return message;
   },
 
-  fromJSON(object: any): Text2imageRequest {
+  fromJSON(object: any): CapitalizeRequest {
     return {
-      prompt: isSet(object.prompt) ? globalThis.String(object.prompt) : "",
-      n: isSet(object.n) ? globalThis.Number(object.n) : 0,
-      size: isSet(object.size) ? globalThis.String(object.size) : "",
+      text: isSet(object.text) ? globalThis.String(object.text) : "",
+      file: isSet(object.file) ? FileReference.fromJSON(object.file) : undefined,
     };
   },
 
-  toJSON(message: Text2imageRequest): unknown {
+  toJSON(message: CapitalizeRequest): unknown {
     const obj: any = {};
-    if (message.prompt !== "") {
-      obj.prompt = message.prompt;
+    if (message.text !== "") {
+      obj.text = message.text;
     }
-    if (message.n !== 0) {
-      obj.n = Math.round(message.n);
-    }
-    if (message.size !== "") {
-      obj.size = message.size;
+    if (message.file !== undefined) {
+      obj.file = FileReference.toJSON(message.file);
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Text2imageRequest>, I>>(base?: I): Text2imageRequest {
-    return Text2imageRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<CapitalizeRequest>, I>>(base?: I): CapitalizeRequest {
+    return CapitalizeRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Text2imageRequest>, I>>(object: I): Text2imageRequest {
-    const message = createBaseText2imageRequest();
-    message.prompt = object.prompt ?? "";
-    message.n = object.n ?? 0;
-    message.size = object.size ?? "";
+  fromPartial<I extends Exact<DeepPartial<CapitalizeRequest>, I>>(object: I): CapitalizeRequest {
+    const message = createBaseCapitalizeRequest();
+    message.text = object.text ?? "";
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileReference.fromPartial(object.file)
+      : undefined;
     return message;
   },
 };
 
-function createBaseText2textRequest(): Text2textRequest {
-  return { messages: [], maxTokens: 0 };
-}
-
-export const Text2textRequest = {
-  encode(message: Text2textRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.messages) {
-      writer.uint32(10).string(v!);
-    }
-    if (message.maxTokens !== 0) {
-      writer.uint32(16).int32(message.maxTokens);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2textRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2textRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.messages.push(reader.string());
-          continue;
-        case 2:
-          if (tag !== 16) {
-            break;
-          }
-
-          message.maxTokens = reader.int32();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Text2textRequest {
-    return {
-      messages: globalThis.Array.isArray(object?.messages) ? object.messages.map((e: any) => globalThis.String(e)) : [],
-      maxTokens: isSet(object.maxTokens) ? globalThis.Number(object.maxTokens) : 0,
-    };
-  },
-
-  toJSON(message: Text2textRequest): unknown {
-    const obj: any = {};
-    if (message.messages?.length) {
-      obj.messages = message.messages;
-    }
-    if (message.maxTokens !== 0) {
-      obj.maxTokens = Math.round(message.maxTokens);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Text2textRequest>, I>>(base?: I): Text2textRequest {
-    return Text2textRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Text2textRequest>, I>>(object: I): Text2textRequest {
-    const message = createBaseText2textRequest();
-    message.messages = object.messages?.map((e) => e) || [];
-    message.maxTokens = object.maxTokens ?? 0;
-    return message;
-  },
-};
-
-function createBaseText2audioRequest(): Text2audioRequest {
-  return { prompt: "", duration: 0, steps: 0, cfgScale: 0 };
-}
-
-export const Text2audioRequest = {
-  encode(message: Text2audioRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.prompt !== "") {
-      writer.uint32(10).string(message.prompt);
-    }
-    if (message.duration !== 0) {
-      writer.uint32(16).int32(message.duration);
-    }
-    if (message.steps !== 0) {
-      writer.uint32(24).int32(message.steps);
-    }
-    if (message.cfgScale !== 0) {
-      writer.uint32(37).float(message.cfgScale);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2audioRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2audioRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.prompt = reader.string();
-          continue;
-        case 2:
-          if (tag !== 16) {
-            break;
-          }
-
-          message.duration = reader.int32();
-          continue;
-        case 3:
-          if (tag !== 24) {
-            break;
-          }
-
-          message.steps = reader.int32();
-          continue;
-        case 4:
-          if (tag !== 37) {
-            break;
-          }
-
-          message.cfgScale = reader.float();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Text2audioRequest {
-    return {
-      prompt: isSet(object.prompt) ? globalThis.String(object.prompt) : "",
-      duration: isSet(object.duration) ? globalThis.Number(object.duration) : 0,
-      steps: isSet(object.steps) ? globalThis.Number(object.steps) : 0,
-      cfgScale: isSet(object.cfgScale) ? globalThis.Number(object.cfgScale) : 0,
-    };
-  },
-
-  toJSON(message: Text2audioRequest): unknown {
-    const obj: any = {};
-    if (message.prompt !== "") {
-      obj.prompt = message.prompt;
-    }
-    if (message.duration !== 0) {
-      obj.duration = Math.round(message.duration);
-    }
-    if (message.steps !== 0) {
-      obj.steps = Math.round(message.steps);
-    }
-    if (message.cfgScale !== 0) {
-      obj.cfgScale = message.cfgScale;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Text2audioRequest>, I>>(base?: I): Text2audioRequest {
-    return Text2audioRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Text2audioRequest>, I>>(object: I): Text2audioRequest {
-    const message = createBaseText2audioRequest();
-    message.prompt = object.prompt ?? "";
-    message.duration = object.duration ?? 0;
-    message.steps = object.steps ?? 0;
-    message.cfgScale = object.cfgScale ?? 0;
-    return message;
-  },
-};
-
-function createBaseText2imageResponse(): Text2imageResponse {
+function createBaseCapitalizeResponse(): CapitalizeResponse {
   return { result: "" };
 }
 
-export const Text2imageResponse = {
-  encode(message: Text2imageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const CapitalizeResponse = {
+  encode(message: CapitalizeResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.result !== "") {
       writer.uint32(10).string(message.result);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2imageResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CapitalizeResponse {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2imageResponse();
+    const message = createBaseCapitalizeResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -353,11 +138,11 @@ export const Text2imageResponse = {
     return message;
   },
 
-  fromJSON(object: any): Text2imageResponse {
+  fromJSON(object: any): CapitalizeResponse {
     return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
   },
 
-  toJSON(message: Text2imageResponse): unknown {
+  toJSON(message: CapitalizeResponse): unknown {
     const obj: any = {};
     if (message.result !== "") {
       obj.result = message.result;
@@ -365,144 +150,24 @@ export const Text2imageResponse = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Text2imageResponse>, I>>(base?: I): Text2imageResponse {
-    return Text2imageResponse.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<CapitalizeResponse>, I>>(base?: I): CapitalizeResponse {
+    return CapitalizeResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Text2imageResponse>, I>>(object: I): Text2imageResponse {
-    const message = createBaseText2imageResponse();
-    message.result = object.result ?? "";
-    return message;
-  },
-};
-
-function createBaseText2textResponse(): Text2textResponse {
-  return { result: "" };
-}
-
-export const Text2textResponse = {
-  encode(message: Text2textResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.result !== "") {
-      writer.uint32(10).string(message.result);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2textResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2textResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.result = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Text2textResponse {
-    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
-  },
-
-  toJSON(message: Text2textResponse): unknown {
-    const obj: any = {};
-    if (message.result !== "") {
-      obj.result = message.result;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Text2textResponse>, I>>(base?: I): Text2textResponse {
-    return Text2textResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Text2textResponse>, I>>(object: I): Text2textResponse {
-    const message = createBaseText2textResponse();
-    message.result = object.result ?? "";
-    return message;
-  },
-};
-
-function createBaseText2audioResponse(): Text2audioResponse {
-  return { result: "" };
-}
-
-export const Text2audioResponse = {
-  encode(message: Text2audioResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.result !== "") {
-      writer.uint32(10).string(message.result);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): Text2audioResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseText2audioResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.result = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Text2audioResponse {
-    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
-  },
-
-  toJSON(message: Text2audioResponse): unknown {
-    const obj: any = {};
-    if (message.result !== "") {
-      obj.result = message.result;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Text2audioResponse>, I>>(base?: I): Text2audioResponse {
-    return Text2audioResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Text2audioResponse>, I>>(object: I): Text2audioResponse {
-    const message = createBaseText2audioResponse();
+  fromPartial<I extends Exact<DeepPartial<CapitalizeResponse>, I>>(object: I): CapitalizeResponse {
+    const message = createBaseCapitalizeResponse();
     message.result = object.result ?? "";
     return message;
   },
 };
 
 function createBaseTaskRequest(): TaskRequest {
-  return { text2image: undefined, text2text: undefined, text2audio: undefined };
+  return { capitalize: undefined };
 }
 
 export const TaskRequest = {
   encode(message: TaskRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.text2image !== undefined) {
-      Text2imageRequest.encode(message.text2image, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.text2text !== undefined) {
-      Text2textRequest.encode(message.text2text, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.text2audio !== undefined) {
-      Text2audioRequest.encode(message.text2audio, writer.uint32(26).fork()).ldelim();
+    if (message.capitalize !== undefined) {
+      CapitalizeRequest.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -519,21 +184,7 @@ export const TaskRequest = {
             break;
           }
 
-          message.text2image = Text2imageRequest.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.text2text = Text2textRequest.decode(reader, reader.uint32());
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.text2audio = Text2audioRequest.decode(reader, reader.uint32());
+          message.capitalize = CapitalizeRequest.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -545,23 +196,13 @@ export const TaskRequest = {
   },
 
   fromJSON(object: any): TaskRequest {
-    return {
-      text2image: isSet(object.text2image) ? Text2imageRequest.fromJSON(object.text2image) : undefined,
-      text2text: isSet(object.text2text) ? Text2textRequest.fromJSON(object.text2text) : undefined,
-      text2audio: isSet(object.text2audio) ? Text2audioRequest.fromJSON(object.text2audio) : undefined,
-    };
+    return { capitalize: isSet(object.capitalize) ? CapitalizeRequest.fromJSON(object.capitalize) : undefined };
   },
 
   toJSON(message: TaskRequest): unknown {
     const obj: any = {};
-    if (message.text2image !== undefined) {
-      obj.text2image = Text2imageRequest.toJSON(message.text2image);
-    }
-    if (message.text2text !== undefined) {
-      obj.text2text = Text2textRequest.toJSON(message.text2text);
-    }
-    if (message.text2audio !== undefined) {
-      obj.text2audio = Text2audioRequest.toJSON(message.text2audio);
+    if (message.capitalize !== undefined) {
+      obj.capitalize = CapitalizeRequest.toJSON(message.capitalize);
     }
     return obj;
   },
@@ -571,33 +212,21 @@ export const TaskRequest = {
   },
   fromPartial<I extends Exact<DeepPartial<TaskRequest>, I>>(object: I): TaskRequest {
     const message = createBaseTaskRequest();
-    message.text2image = (object.text2image !== undefined && object.text2image !== null)
-      ? Text2imageRequest.fromPartial(object.text2image)
-      : undefined;
-    message.text2text = (object.text2text !== undefined && object.text2text !== null)
-      ? Text2textRequest.fromPartial(object.text2text)
-      : undefined;
-    message.text2audio = (object.text2audio !== undefined && object.text2audio !== null)
-      ? Text2audioRequest.fromPartial(object.text2audio)
+    message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
+      ? CapitalizeRequest.fromPartial(object.capitalize)
       : undefined;
     return message;
   },
 };
 
 function createBaseTaskResponse(): TaskResponse {
-  return { text2image: undefined, text2text: undefined, text2audio: undefined };
+  return { capitalize: undefined };
 }
 
 export const TaskResponse = {
   encode(message: TaskResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.text2image !== undefined) {
-      Text2imageResponse.encode(message.text2image, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.text2text !== undefined) {
-      Text2textResponse.encode(message.text2text, writer.uint32(18).fork()).ldelim();
-    }
-    if (message.text2audio !== undefined) {
-      Text2audioResponse.encode(message.text2audio, writer.uint32(26).fork()).ldelim();
+    if (message.capitalize !== undefined) {
+      CapitalizeResponse.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -614,21 +243,7 @@ export const TaskResponse = {
             break;
           }
 
-          message.text2image = Text2imageResponse.decode(reader, reader.uint32());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.text2text = Text2textResponse.decode(reader, reader.uint32());
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.text2audio = Text2audioResponse.decode(reader, reader.uint32());
+          message.capitalize = CapitalizeResponse.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -640,23 +255,13 @@ export const TaskResponse = {
   },
 
   fromJSON(object: any): TaskResponse {
-    return {
-      text2image: isSet(object.text2image) ? Text2imageResponse.fromJSON(object.text2image) : undefined,
-      text2text: isSet(object.text2text) ? Text2textResponse.fromJSON(object.text2text) : undefined,
-      text2audio: isSet(object.text2audio) ? Text2audioResponse.fromJSON(object.text2audio) : undefined,
-    };
+    return { capitalize: isSet(object.capitalize) ? CapitalizeResponse.fromJSON(object.capitalize) : undefined };
   },
 
   toJSON(message: TaskResponse): unknown {
     const obj: any = {};
-    if (message.text2image !== undefined) {
-      obj.text2image = Text2imageResponse.toJSON(message.text2image);
-    }
-    if (message.text2text !== undefined) {
-      obj.text2text = Text2textResponse.toJSON(message.text2text);
-    }
-    if (message.text2audio !== undefined) {
-      obj.text2audio = Text2audioResponse.toJSON(message.text2audio);
+    if (message.capitalize !== undefined) {
+      obj.capitalize = CapitalizeResponse.toJSON(message.capitalize);
     }
     return obj;
   },
@@ -666,14 +271,8 @@ export const TaskResponse = {
   },
   fromPartial<I extends Exact<DeepPartial<TaskResponse>, I>>(object: I): TaskResponse {
     const message = createBaseTaskResponse();
-    message.text2image = (object.text2image !== undefined && object.text2image !== null)
-      ? Text2imageResponse.fromPartial(object.text2image)
-      : undefined;
-    message.text2text = (object.text2text !== undefined && object.text2text !== null)
-      ? Text2textResponse.fromPartial(object.text2text)
-      : undefined;
-    message.text2audio = (object.text2audio !== undefined && object.text2audio !== null)
-      ? Text2audioResponse.fromPartial(object.text2audio)
+    message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
+      ? CapitalizeResponse.fromPartial(object.capitalize)
       : undefined;
     return message;
   },

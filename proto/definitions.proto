@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message FileReference {
+  string type = 1;  // Should always be "file_reference"
+  string id = 2;
+  string name = 3;
+  int64 size = 4;
+  string hash = 5;
+}

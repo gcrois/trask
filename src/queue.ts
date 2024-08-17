@@ -1,7 +1,8 @@
-// taskQueue.ts
-import { Task, TaskType } from "@src/types";
+import { FileReference, Task, TaskType } from "./types";
 import { TWorker, WorkerStatus } from "./workers";
 import { v4 as uuid } from "uuid";
+
+export type QueueId = string;
 
 export enum QueuedTaskStatus {
 	Queued,
@@ -17,14 +18,7 @@ export enum TaskQueueEvent {
 	TaskUpdate = "taskUpdate",
 }
 
-type QueueId = string;
-
-export interface QueuedTask<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	T extends TaskType = any,
-	_Input = Task<T>["request"] & object,
-	Output = Task<T>["response"] & object,
-> {
+export interface QueuedTask<T extends TaskType = any> {
 	id: QueueId;
 	timestamp: number;
 	status: QueuedTaskStatus;
@@ -33,20 +27,13 @@ export interface QueuedTask<
 	queuedTime: number;
 	startTime?: number;
 	endTime?: number;
-	externalPromise?: Promise<Output>;
-	resolve: (value: Output | PromiseLike<Output>) => void;
+	externalPromise?: Promise<any>;
+	resolve: (value: any) => void;
 	reject: (reason?: unknown) => void;
 }
 
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
-type TaskUpdateListener = <
-	T extends TaskType,
-	_Input = Task<T>["request"] & object,
-	Output = Task<T>["response"] & object,
->(
-	taskId: string,
-	update: Output,
-) => void;
+type TaskUpdateListener = (taskId: string, update: any) => void;
 
 export class TaskQueue {
 	private tasks: Map<string, QueuedTask> = new Map();
@@ -54,6 +41,24 @@ export class TaskQueue {
 	private listeners: {
 		[key: string]: (TasksListener | TaskUpdateListener)[];
 	} = {};
+	private fileReferences: Map<string, Blob> = new Map();
+
+	addFile(blob: Blob): FileReference {
+		const ref = {
+			type: "file_reference" as const,
+			id: uuid(),
+			size: blob.size,
+			hash: "hash",
+		};
+
+		this.fileReferences.set(ref.id, blob);
+
+		return ref;
+	}
+
+	getFile(id: string): Blob | undefined {
+		return this.fileReferences.get(id);
+	}
 
 	addWorker(worker: TWorker): void {
 		this.workers.set(worker.id, worker);
@@ -77,24 +82,20 @@ export class TaskQueue {
 			: Promise.reject("Task not found");
 	}
 
-	addTask<
-		T extends TaskType,
-		Input = Task<T>["request"] & object,
-		Output = Task<T>["request"],
-	>(task: Task<T>): QueueId {
+	addTask<T extends TaskType>(task: Omit<Task<T>, "id">): QueueId {
 		const id = uuid();
 		const timestamp = Date.now();
 		const status = QueuedTaskStatus.Queued;
 		const queuedTime = Date.now();
 
-		let resolveExternal: (value: Output | PromiseLike<Output>) => void;
+		let resolveExternal: (value: any) => void;
 		let rejectExternal: (reason?: unknown) => void;
-		const externalPromise = new Promise<Output>((resolve, reject) => {
+		const externalPromise = new Promise((resolve, reject) => {
 			resolveExternal = resolve;
 			rejectExternal = reject;
 		});
 
-		const promise = new Promise<Output>((resolve, reject) => {
+		const promise = new Promise((resolve, reject) => {
 			this.tasks.set(id, {
 				id,
 				timestamp,
@@ -136,26 +137,39 @@ export class TaskQueue {
 		);
 
 		this.emit(TaskQueueEvent.QueueChange);
-		this.workers.forEach((worker) => {
-			if (worker.status === WorkerStatus.Waiting) {
-				worker.requestJob();
-			}
-		});
-
+		this.notifyWorkers();
 		return id;
 	}
 
-	assignTask(taskId: string, workerId: string) {
-		const queuedTask = this.tasks.get(taskId);
-		if (queuedTask && queuedTask.status === QueuedTaskStatus.Queued) {
+	private notifyWorkers() {
+		this.workers.forEach((worker) => {
+			worker.onAvailableTasksChange();
+		});
+	}
+
+	getAvailableTasks(): QueuedTask[] {
+		return Array.from(this.tasks.values())
+			.filter((task) => task.status === QueuedTaskStatus.Queued)
+			.sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp, newest first
+	}
+
+	getTask(id: string): QueuedTask | undefined {
+		return this.tasks.get(id);
+	}
+
+	claimTask(taskId: string, workerId: string): boolean {
+		const task = this.tasks.get(taskId);
+		if (task && task.status === QueuedTaskStatus.Queued) {
 			this.tasks.set(taskId, {
-				...queuedTask,
+				...task,
 				status: QueuedTaskStatus.Pending,
 				worker: workerId,
 				startTime: Date.now(),
 			});
 			this.emit(TaskQueueEvent.QueueChange);
+			return true;
 		}
+		return false;
 	}
 
 	cancelTask(id: string) {
@@ -170,11 +184,7 @@ export class TaskQueue {
 		return this.tasks;
 	}
 
-	handleIncrementalUpdate<
-		T extends TaskType,
-		_Input = Task<T>["request"] & object,
-		Output = Task<T>["response"] & object,
-	>(taskId: string, update: Output) {
+	handleIncrementalUpdate(taskId: string, update: any) {
 		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
 	}
 
@@ -193,7 +203,6 @@ export class TaskQueue {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	emit(event: TaskQueueEvent, ...args: any[]) {
 		this.listeners[event]?.forEach((callback) => {
 			if (event === TaskQueueEvent.TaskUpdate) {
@@ -203,4 +212,10 @@ export class TaskQueue {
 			}
 		});
 	}
+}
+
+export function isFileReference(value: any): value is FileReference {
+	return (
+		value && typeof value === "object" && value.type === "file_reference"
+	);
 }

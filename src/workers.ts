@@ -1,19 +1,20 @@
-// workers.ts
-
-import { QueuedTaskStatus, TaskQueue, TaskQueueEvent } from "./queue";
+import {
+	QueuedTask,
+	QueuedTaskStatus,
+	TaskQueue,
+	TaskQueueEvent,
+} from "./queue";
 import { v4 as uuid } from "uuid";
 import { Task, TaskType } from "./types";
 import { TaskRequest, TaskResponse } from "@proto/tasks";
 
 export type WorkerId = string;
 
-console.log("worker.ts");
-
 export enum WorkerStatus {
 	Idle = "Idle",
-	Waiting = "Waiting",
 	Busy = "Busy",
 	Paused = "Paused",
+	Error = "Error",
 }
 
 export interface TWorker {
@@ -21,10 +22,7 @@ export interface TWorker {
 	status: WorkerStatus;
 	message: string;
 
-	execute: <T extends TaskType>(
-		task: Task<T>,
-	) => Promise<Task<T>["response"]>;
-	requestJob: () => boolean;
+	onAvailableTasksChange: () => void;
 	setMessage: (message: string) => void;
 	setStatus: (status: WorkerStatus) => void;
 	dispose: () => void;
@@ -53,62 +51,9 @@ abstract class BaseWorker implements TWorker {
 		this.taskQueue.emit(TaskQueueEvent.WorkerChange);
 	}
 
-	abstract execute<T extends TaskType>(
-		task: Task<T>,
-	): Promise<Task<T>["response"]>;
-
 	abstract dispose: () => void;
 
-	requestJob(): boolean {
-		if (
-			!(
-				this.status === WorkerStatus.Idle ||
-				this.status === WorkerStatus.Waiting
-			)
-		) {
-			console.warn(
-				`Worker ${this.id} is not idle or waiting, but requested a job`,
-			);
-			return false;
-		}
-
-		console.log("Requesting job");
-		const tasks = Array.from(this.taskQueue.getTasks());
-
-		const queuedTasks = tasks.filter(([_id, task]) => {
-			return task.status === QueuedTaskStatus.Queued;
-		});
-
-		if (queuedTasks.length === 0) {
-			console.log("No tasks, waiting for tasks");
-			this.setMessage("Waiting for tasks");
-			this.setStatus(WorkerStatus.Waiting);
-			return false;
-		}
-
-		queuedTasks.sort((a, b) => a[1].timestamp - b[1].timestamp);
-
-		const [id, task] = queuedTasks[0];
-		this.taskQueue.assignTask(id, this.id);
-
-		this.setMessage(`Executing ${task.task.name} (${id.split("-")[0]})`);
-		console.log(`Executing task ${id.split("-")[0]}`, tasks);
-		this.setStatus(WorkerStatus.Busy);
-
-		this.execute(task.task)
-			.then((result) => {
-				task.resolve(result);
-				this.setStatus(WorkerStatus.Waiting);
-				this.requestJob();
-			})
-			.catch((error) => {
-				task.reject(error);
-				this.setStatus(WorkerStatus.Waiting);
-				console.error(error);
-			});
-
-		return true;
-	}
+	abstract onAvailableTasksChange(): void;
 }
 
 export class WebWorkerAdapter extends BaseWorker {
@@ -128,11 +73,34 @@ export class WebWorkerAdapter extends BaseWorker {
 		};
 	}
 
+	async onAvailableTasksChange(): Promise<void> {
+		if (this.status !== WorkerStatus.Idle) {
+			return;
+		}
+
+		const availableTasks = this.taskQueue.getAvailableTasks();
+		if (availableTasks.length === 0) {
+			this.setStatus(WorkerStatus.Idle);
+			return;
+		}
+
+		const task = availableTasks[0];
+		const claimed = this.taskQueue.claimTask(task.id, this.id);
+		if (claimed) {
+			await this.execute(task.task);
+			this.setStatus(WorkerStatus.Idle);
+		}
+	}
+
 	async execute<T extends TaskType>(
 		task: Task<T>,
 	): Promise<Task<T>["response"]> {
+		this.setStatus(WorkerStatus.Busy);
+
+		this.setMessage(`Executing ${task.name}`);
 		console.log("sending task to webworker", task);
-		return await new Promise((resolve, reject) => {
+
+		return new Promise((resolve, reject) => {
 			const messageHandler = (event: MessageEvent) => {
 				if (
 					event.data.type === "result" &&
@@ -156,13 +124,29 @@ export class WebWorkerAdapter extends BaseWorker {
 		console.log(`Disposing webworker ${this.id}`);
 		this.worker.terminate();
 	};
+
+	protected selectSuitableTask(tasks: QueuedTask[]): QueuedTask | null {
+		// Default implementation: select the first available task
+		return tasks[0] || null;
+	}
 }
+
+const blobToBase64 = (blob: Blob) => {
+	return new Promise((resolve) => {
+		const reader = new FileReader();
+		reader.readAsDataURL(blob);
+		reader.onloadend = function () {
+			resolve(reader.result);
+		};
+	});
+};
 
 export class APIWorker extends BaseWorker {
 	private ws: WebSocket;
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	private taskPromises: Map<string, { resolve: Function; reject: Function }> =
-		new Map();
+	private taskPromises: Map<
+		string,
+		{ resolve: (value: any) => void; reject: (reason?: any) => void }
+	> = new Map();
 
 	constructor(wsEndpoint: string, taskQueue: TaskQueue) {
 		super(taskQueue);
@@ -193,38 +177,81 @@ export class APIWorker extends BaseWorker {
 					promise.reject(new Error(message.error));
 					this.taskPromises.delete(message.taskId);
 				}
+			} else if (message.type === "get_available_tasks") {
+				const tasks = this.taskQueue.getAvailableTasks();
+				this.ws.send(
+					JSON.stringify({
+						type: "available_tasks",
+						tasks: tasks.map((task) => task.task),
+					}),
+				);
+			} else if (message.type === "file_request") {
+				const file = this.taskQueue.getFile(message.fileId);
+				if (file) {
+					this.ws.send(
+						JSON.stringify({
+							type: "file_response",
+							fileId: message.fileId,
+							content: blobToBase64(file),
+						}),
+					);
+				}
+			} else if (message.type === "accept_task") {
+				const task = this.taskQueue.getTask(message.taskId);
+				console.log("Received accept_task message", message, task, task!.status);
+				// verify that the task is still available
+				if (task && task.status === QueuedTaskStatus.Queued) {
+					this.taskQueue.claimTask(message.taskId, this.id);
+					this.setStatus(WorkerStatus.Busy);
+					this.ws.send(
+						JSON.stringify({
+							type: "accept_task_valid",
+							taskId: message.taskId,
+						}),
+					);
+				}
+				else {
+					console.error(`Task ${message.taskId} is not available`);
+					this.ws.send(
+						JSON.stringify({
+							type: "accept_task_invalid",
+							taskId: message.taskId,
+						}),
+					);
+				}
 			}
 		};
 
 		this.ws.onclose = () => {
 			console.log("WebSocket connection closed");
-			this.setStatus(WorkerStatus.Paused);
+			this.setStatus(WorkerStatus.Error);
+			this.setMessage("Connection closed");
 		};
 
 		this.ws.onerror = (error) => {
 			console.error("WebSocket error:", error);
-			this.setStatus(WorkerStatus.Paused);
+			this.setMessage(`Connection error: ${error}`);
 		};
 	}
 
-	async execute<T extends TaskType>(
-		task: Task<T>,
-	): Promise<Task<T>["response"]> {
-		this.setStatus(WorkerStatus.Busy);
-		this.setMessage(`Executing ${task.name}`);
-		console.log("sending task to api", task);
+	onAvailableTasksChange(): void {
+		if (this.status !== WorkerStatus.Idle) {
+			return;
+		}
 
-		return new Promise((resolve, reject) => {
-			this.taskPromises.set(task.id, { resolve, reject });
-			this.ws.send(
-				JSON.stringify({
-					type: "execute",
-					taskId: task.id,
-					name: task.name,
-					request: task.request,
-				}),
-			);
-		});
+		const availableTasks = this.taskQueue.getAvailableTasks();
+
+		this.ws.send(
+			JSON.stringify({
+				type: "available_tasks",
+				tasks: availableTasks.map((task) => task.task),
+			}),
+		);
+	}
+
+	pause() {
+		this.ws.send(JSON.stringify({ type: "pause" }));
+		this.setStatus(WorkerStatus.Paused);
 	}
 
 	dispose = () => {
