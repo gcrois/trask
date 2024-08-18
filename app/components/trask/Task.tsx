@@ -92,7 +92,10 @@ export const Tasks: React.FC<TasksComponentProps> = ({ queue }) => {
 				/>
 				<button
 					onClick={() =>
-						addTask({ name: "capitalize", request: { text: input } })
+						addTask({
+							name: "capitalize",
+							request: { text: input },
+						})
 					}
 				>
 					Add Capitalize Task

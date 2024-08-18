@@ -1,4 +1,5 @@
-import type { TaskRequest, TaskResponse } from "@proto/tasks";
+import type { TaskRequest, TaskResponse } from "../proto/ts/tasks";
+//"@proto/tasks";
 
 export type TaskType = keyof TaskRequest & keyof TaskResponse;
 
@@ -9,9 +10,16 @@ export interface FileReference {
 	hash: string;
 }
 
-export interface Task<T extends TaskType | unknown = unknown> {
+export interface Task<T extends TaskType> {
 	id: string;
 	name: T;
-	request: T extends TaskType ? TaskRequest[T] & object : object;
-	response?: T extends TaskType ? TaskResponse[T] & object : object;
+	request: TaskRequest[T];
+	response?: TaskResponse[T];
+}
+
+export interface AnyTask {
+	id: string;
+	name: string;
+	request: object;
+	response?: object;
 }

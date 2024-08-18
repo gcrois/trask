@@ -18,7 +18,7 @@ export enum TaskQueueEvent {
 	TaskUpdate = "taskUpdate",
 }
 
-export interface QueuedTask<T extends TaskType = any> {
+export interface QueuedTask<T extends TaskType = TaskType> {
 	id: QueueId;
 	timestamp: number;
 	status: QueuedTaskStatus;
@@ -28,13 +28,13 @@ export interface QueuedTask<T extends TaskType = any> {
 	queuedTime: number;
 	startTime?: number;
 	endTime?: number;
-	externalPromise?: Promise<any>;
-	resolve: (value: any) => void;
+	externalPromise?: Promise<Task<T>["response"]>;
+	resolve: (value: Task<T>["response"]) => void;
 	reject: (reason?: unknown) => void;
 }
 
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
-type TaskUpdateListener = (taskId: string, update: any) => void;
+type TaskUpdateListener = <T extends TaskType = TaskType>(taskId: string, update: Task<T>["response"]) => void;
 
 export class TaskQueue {
 	private tasks: Map<string, QueuedTask> = new Map();
@@ -89,12 +89,12 @@ export class TaskQueue {
 		const status = QueuedTaskStatus.Queued;
 		const queuedTime = Date.now();
 
-		let resolveExternal: (value: any) => void;
+		let resolveExternal: (value: Task<T>["response"]) => void;
 		let rejectExternal: (reason?: unknown) => void;
 		const externalPromise = new Promise((resolve, reject) => {
 			resolveExternal = resolve;
 			rejectExternal = reject;
-		});
+		}) as Promise<Task<T>["response"]>;
 
 		const promise = new Promise((resolve, reject) => {
 			this.tasks.set(id, {
@@ -107,7 +107,7 @@ export class TaskQueue {
 				queuedTime,
 				externalPromise,
 			});
-		});
+		}) as Promise<Task<T>["response"]>;
 
 		promise.then(
 			(response) => {
@@ -189,7 +189,7 @@ export class TaskQueue {
 		}
 	}
 
-	resolveTask(id: string, response: any) {
+	resolveTask<T extends TaskType>(id: string, response: Task<T>["response"]) {
 		const task = this.tasks.get(id);
 		if (task) {
 			task.resolve(response);
@@ -201,7 +201,7 @@ export class TaskQueue {
 		return this.tasks;
 	}
 
-	handleIncrementalUpdate(taskId: string, update: any) {
+	handleIncrementalUpdate<T extends TaskType>(taskId: string, update: Task<T>["response"]) {
 		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
 	}
 
@@ -220,6 +220,7 @@ export class TaskQueue {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	emit(event: TaskQueueEvent, ...args: any[]) {
 		this.listeners[event]?.forEach((callback) => {
 			if (event === TaskQueueEvent.TaskUpdate) {
@@ -231,7 +232,7 @@ export class TaskQueue {
 	}
 }
 
-export function isFileReference(value: any): value is FileReference {
+export function isFileReference(value: {type?: "file_reference"}): value is FileReference {
 	return (
 		value && typeof value === "object" && value.type === "file_reference"
 	);
