@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { TaskQueue, QueuedTaskStatus, TaskQueueEvent } from "./queue";
 import { APIWorker, WebWorkerAdapter, WorkerStatus } from "./workers";
 import { Task } from "./types";
-import * as wsmsg from "@proto/websocket";
+import * as wsmsg from "../proto/ts/websocket";
 import { TaskRequest, TaskResponse } from "@proto/tasks";
 
 // Mock WebSocket

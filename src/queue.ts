@@ -1,7 +1,14 @@
-import { TaskResponse } from "@proto/tasks";
 import { FileReference, Task, TaskType } from "./types";
-import { TWorker, WorkerStatus } from "./workers";
+import { TWorker } from "./workers";
 import { v4 as uuid } from "uuid";
+
+type FileID = `file:${string}`;
+
+export interface AssetEntry extends Omit<FileReference, "type"> {
+	id: FileID;
+	url?: string;
+	file: Blob;
+}
 
 export type QueueId = string;
 
@@ -35,7 +42,39 @@ export interface QueuedTask<T extends TaskType = TaskType> {
 }
 
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
-type TaskUpdateListener = <T extends TaskType = TaskType>(taskId: string, update: Task<T>["response"]) => void;
+type TaskUpdateListener = <T extends TaskType = TaskType>(
+	taskId: string,
+	update: Task<T>["response"],
+) => void;
+
+interface FileManager {
+	addFile(blob: Blob, fileId?: FileID): Promise<FileID>;
+	getFile(id: FileID): Promise<AssetEntry | null>;
+}
+
+export function assetEntryToBase64(entry: AssetEntry): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => {
+			const base64 = reader.result as string;
+			resolve(base64);
+		};
+		reader.onerror = reject;
+		reader.readAsDataURL(entry.file);
+	});
+}
+
+export function base64ToBlob(base64: string): Blob {
+	const parts = base64.split(",");
+	const byteString = atob(parts[1]);
+	const mimeString = parts[0].split(":")[1].split(";")[0];
+	const ab = new ArrayBuffer(byteString.length);
+	const ia = new Uint8Array(ab);
+	for (let i = 0; i < byteString.length; i++) {
+		ia[i] = byteString.charCodeAt(i);
+	}
+	return new Blob([ab], { type: mimeString });
+}
 
 export class TaskQueue {
 	private tasks: Map<string, QueuedTask> = new Map();
@@ -43,23 +82,18 @@ export class TaskQueue {
 	private listeners: {
 		[key: string]: (TasksListener | TaskUpdateListener)[];
 	} = {};
-	private fileReferences: Map<string, Blob> = new Map();
 
-	addFile(blob: Blob, fileId?: string): FileReference {
-		const ref = {
-			type: "file_reference" as const,
-			id: fileId ?? uuid(),
-			size: blob.size,
-			hash: "hash",
-		};
-
-		this.fileReferences.set(ref.id, blob);
-
-		return ref;
+	setFileManager(fileManager: FileManager) {
+		this.addFile = (blob, fileId) => fileManager.addFile(blob, fileId);
+		this.getFile = (id) => fileManager.getFile(id);
 	}
 
-	getFile(id: string): Blob | undefined {
-		return this.fileReferences.get(id);
+	addFile(_blob: Blob, _fileId?: FileID): Promise<FileID> {
+		throw new Error("Needs fileManager to add files!");
+	}
+
+	getFile(_id: FileID): Promise<AssetEntry | null> {
+		throw new Error("Needs fileManager to get files!");
 	}
 
 	addWorker(worker: TWorker): void {
@@ -77,7 +111,9 @@ export class TaskQueue {
 		return this.workers;
 	}
 
-	getTaskPromise<T extends TaskType>(id: string): Promise<Task<T>["response"] | undefined> {
+	getTaskPromise<T extends TaskType>(
+		id: string,
+	): Promise<Task<T>["response"] | undefined> {
 		const queuedTask = this.tasks.get(id);
 		return queuedTask
 			? queuedTask.externalPromise!
@@ -202,7 +238,10 @@ export class TaskQueue {
 		return this.tasks;
 	}
 
-	handleIncrementalUpdate<T extends TaskType>(taskId: string, update: Task<T>["response"]) {
+	handleIncrementalUpdate<T extends TaskType>(
+		taskId: string,
+		update: Task<T>["response"],
+	) {
 		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
 	}
 
@@ -233,7 +272,9 @@ export class TaskQueue {
 	}
 }
 
-export function isFileReference(value: {type?: "file_reference"}): value is FileReference {
+export function isFileReference(value: {
+	type?: "file_reference";
+}): value is FileReference {
 	return (
 		value && typeof value === "object" && value.type === "file_reference"
 	);

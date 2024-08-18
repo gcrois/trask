@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-message FileReference {
+message File {
   string type = 1;  // Should always be "file_reference"
   string id = 2;
   string name = 3;

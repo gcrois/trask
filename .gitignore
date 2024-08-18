@@ -38,4 +38,8 @@ certs/*
 backend/dumps/*
 !backend/dumps/.keep
 
+# files
+backend/files/*
+!backend/files/.keep
+
 temp

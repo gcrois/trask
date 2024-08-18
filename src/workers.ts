@@ -1,4 +1,6 @@
 import {
+	assetEntryToBase64,
+	base64ToBlob,
 	QueuedTask,
 	QueuedTaskStatus,
 	TaskQueue,
@@ -10,8 +12,6 @@ import { TaskRequest, TaskResponse } from "../proto/ts/tasks"; //"@proto/tasks";
 import * as wsmsg from "../proto/ts/websocket";
 
 export type WorkerId = string;
-
-console.log("fuck")
 
 export enum WorkerStatus {
 	Idle = "Idle",
@@ -218,13 +218,13 @@ export class APIWorker extends BaseWorker {
 				);
 				this.taskQueue.handleIncrementalUpdate(
 					message.incrementalUpdate.taskId,
-					message.incrementalUpdate.update,
+					message.incrementalUpdate.update as Task<TaskType>["response"]
 				);
 			} else if (message.taskResult) {
 				verbosePrint("Received task result", message.taskResult);
 				this.taskQueue.resolveTask(
 					message.taskResult.taskId,
-					message.taskResult.result,
+					message.taskResult.result as Task<TaskType>["response"]
 				);
 				this.setMessage(`Task ${message.taskResult.taskId} resolved`);
 				this.setStatus(WorkerStatus.Idle);
@@ -266,12 +266,12 @@ export class APIWorker extends BaseWorker {
 				}
 			} else if (message.fileRequest) {
 				verbosePrint("Received file request", message.fileRequest);
-				const file = this.taskQueue.getFile(message.fileRequest.fileId);
+				const file = await this.taskQueue.getFile(message.fileRequest.fileId);
 				if (file) {
-					const content = await this.blobToBase64(file);
+					const content = await assetEntryToBase64(file);
 					const response = wsmsg.ClientMessage.create({
 						fileResponse: {
-							fileId: message.fileRequest.fileId,
+							fileId: file.id,
 							content: content,
 						},
 					});
@@ -281,7 +281,7 @@ export class APIWorker extends BaseWorker {
 			} else if (message.fileSend) {
 				verbosePrint("Received file send", message.fileSend);
 				const { fileId, content } = message.fileSend;
-				const blob = this.base64ToBlob(content);
+				const blob = base64ToBlob(content);
 				this.taskQueue.addFile(blob, fileId);
 			} else if (message.requestAvailableTasks) {
 				verbosePrint(
@@ -315,17 +315,17 @@ export class APIWorker extends BaseWorker {
 		const availableTasks = this.taskQueue.getAvailableTasks();
 		verbosePrint("Available tasks", availableTasks);
 
-        const transpose = {
-            availableTasks: {
-                tasks: availableTasks.map((queuedTask) => ({
-                    id: queuedTask.id,
-                    name: queuedTask.task.name,
-                    request: queuedTask.task.request,
-                })),
-            },
-        };
+		const transpose = {
+			availableTasks: {
+				tasks: availableTasks.map((queuedTask) => ({
+					id: queuedTask.id,
+					name: queuedTask.task.name,
+					request: queuedTask.task.request,
+				})),
+			},
+		};
 
-        console.log("Sending available tasks transpose", transpose);
+		console.log("Sending available tasks transpose", transpose);
 
 		const message = wsmsg.ClientMessage.create({
 			availableTasks: {
@@ -333,12 +333,12 @@ export class APIWorker extends BaseWorker {
 					id: queuedTask.id,
 					name: queuedTask.task.name,
 					request: {
-                        [queuedTask.task.name]: queuedTask.task.request
-                    } as TaskRequest,
+						[queuedTask.task.name]: queuedTask.task.request,
+					} as TaskRequest,
 				})),
 			},
 		});
-        console.log(message.availableTasks?.tasks.map((task) => task));
+		console.log(message.availableTasks?.tasks.map((task) => task));
 
 		verbosePrint("Sending available tasks", message);
 		this.ws.send(wsmsg.ClientMessage.encode(message).finish());
@@ -381,32 +381,9 @@ export class APIWorker extends BaseWorker {
 	dispose = () => {
 		verbosePrint("Disposing API worker!", this.id);
 		try {
-            this.ws.close(1111, "Worker disposed");
-        } catch (e) {
-            console.error("Error closing WebSocket", e);
-        }
-	};
-
-	private blobToBase64(blob: Blob): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.onloadend = () => resolve(reader.result as string);
-			reader.onerror = reject;
-			reader.readAsDataURL(blob);
-		});
-	}
-
-	private base64ToBlob(base64: string): Blob {
-		const parts = base64.split(";base64,");
-		const contentType = parts[0].split(":")[1];
-		const raw = window.atob(parts[1]);
-		const rawLength = raw.length;
-		const uInt8Array = new Uint8Array(rawLength);
-
-		for (let i = 0; i < rawLength; ++i) {
-			uInt8Array[i] = raw.charCodeAt(i);
+			this.ws.close(1000, "Worker disposed");
+		} catch (e) {
+			console.error("Error closing WebSocket", e);
 		}
-
-		return new Blob([uInt8Array], { type: contentType });
-	}
+	};
 }

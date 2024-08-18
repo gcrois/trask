@@ -7,7 +7,7 @@ import betterproto
 
 
 @dataclass
-class FileReference(betterproto.Message):
+class File(betterproto.Message):
     type: str = betterproto.string_field(1)
     id: str = betterproto.string_field(2)
     name: str = betterproto.string_field(3)

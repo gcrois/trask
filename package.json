@@ -7,8 +7,8 @@
 	"main": "./src/index.ts",
 	"types": "./src/index.ts",
 	"exports": {
-	  ".": "./src/index.ts",
-	  "./proto/*": "./proto/ts/*"
+		".": "./src/index.ts",
+		"./proto/*": "./proto/ts/*"
 	},
 	"scripts": {
 		"dev": "vite",
@@ -17,8 +17,8 @@
 		"lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix; stylelint '**/*.{css,scss}' --fix",
 		"style": "prettier --write . && stylelint '**/*.{css,scss}' && npm run lint",
 		"preview": "vite preview",
-		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts -I ../backend tasks.proto websocket.proto && npm run add_python_import",
-		"add_python_import": "cd proto && echo 'from .tasks import *' | cat - ./py/websocket.py > temp && mv temp ./py/websocket.py",
+		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts -I ../backend tasks.proto websocket.proto && npm run add_python_imports",
+		"add_python_imports": "cd proto && echo 'from .tasks import *' | cat - ./py/websocket.py > temp && mv temp ./py/websocket.py && echo 'from .definitions import *' | cat - ./py/tasks.py > temp && mv temp ./py/tasks.py",
 		"test": "vitest"
 	},
 	"dependencies": {
