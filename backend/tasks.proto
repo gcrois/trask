@@ -2,15 +2,43 @@ syntax = "proto3";
 
 import "definitions.proto";
 
-message GreetRequest {
+message Text2textRequest {
+  // Ignored parameters:
+  // client: <class 'inspect._empty'>
+  // send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
+
+  repeated string messages = 1;
+  int32 maxTokens = 2;
+}
+
+message Text2textResponse {
+  string result = 1;
+}
+
+message Text2imageRequest {
   // Ignored parameters:
   // send_update: <class 'inspect._empty'>
 
-  string name = 1;
-  string language = 2;
+  string prompt = 1;
+  string size = 2;
+  int32 seed = 3;
 }
 
-message GreetResponse {
+message Text2imageResponse {
+  string result = 1;
+}
+
+message Text2audioRequest {
+  // Ignored parameters:
+  // send_update: <class 'inspect._empty'>
+
+  string prompt = 1;
+  int32 duration = 2;
+  int32 steps = 3;
+  float cfgScale = 4;
+}
+
+message Text2audioResponse {
   string result = 1;
 }
 
@@ -27,14 +55,18 @@ message CapitalizeResponse {
 
 message TaskRequest {
   oneof task {
-    GreetRequest greet = 1;
-    CapitalizeRequest capitalize = 2;
+    Text2textRequest text2text = 1;
+    Text2imageRequest text2image = 2;
+    Text2audioRequest text2audio = 3;
+    CapitalizeRequest capitalize = 4;
   }
 }
 
 message TaskResponse {
   oneof response {
-    GreetResponse greet = 1;
-    CapitalizeResponse capitalize = 2;
+    Text2textResponse text2text = 1;
+    Text2imageResponse text2image = 2;
+    Text2audioResponse text2audio = 3;
+    CapitalizeResponse capitalize = 4;
   }
 }
