@@ -1,3 +1,4 @@
+import { TaskResponse } from "@proto/tasks";
 import { FileReference, Task, TaskType } from "./types";
 import { TWorker, WorkerStatus } from "./workers";
 import { v4 as uuid } from "uuid";
@@ -76,7 +77,7 @@ export class TaskQueue {
 		return this.workers;
 	}
 
-	getTaskPromise(id: string): Promise<unknown> {
+	getTaskPromise<T extends TaskType>(id: string): Promise<Task<T>["response"] | undefined> {
 		const queuedTask = this.tasks.get(id);
 		return queuedTask
 			? queuedTask.externalPromise!
