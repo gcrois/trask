@@ -8,7 +8,6 @@ from typing import Dict, List, Type, Set, Any
 from datetime import datetime
 import atexit
 import importlib
-import asyncio
 import betterproto
 
 from protobuf_generator import ProtoGenerator
@@ -33,6 +32,18 @@ request_logs: List[Dict] = []
 TASKS: Dict[str, Type[Task]] = {}
 loaded_tasks: Set[str] = set()
 available_files: Set[str] = set()
+
+def adapt_name(task_name):
+    pascal = ProtoGenerator.to_pascal_case(task_name)
+    # also cap after numbers
+    final = ""
+    for i, c in enumerate(pascal):
+        if i > 0 and pascal[i-1].isdigit() and c.isalpha() and c.islower():
+            final += c.upper()
+        else:
+            final += c
+    
+    return final
 
 def dump_logs():
     dumps_dir = os.path.join(os.path.dirname('.'), 'dumps')
@@ -62,9 +73,9 @@ def load_tasks(task_names: List[str] = []):
                         print(f"Loaded task: {name}")
 
 def select_task(available_tasks: List[Dict]):
-    def adapt_name(task_name):
-        return ProtoGenerator.to_pascal_case(task_name)
-    
+
+    print("Available tasks:", [t['name'] for t in available_tasks])
+    print("Adapted names:", [adapt_name(t['name']) for t in available_tasks])
     # Prioritize tasks that are already loaded and have all required files
     for task in available_tasks:
         task_name = adapt_name(task['name'])
@@ -119,7 +130,7 @@ def verbose_print(action: str, message: Any, client_id: str = "NA"):
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
     active_connections[client_id] = websocket
-    verbose_print("Connection established", f"Active connections: {len(active_connections)}", client_id)
+    verbose_print("Connection established", f"Active connections: {len(active_connections)}, now waiting for handshake", client_id)
     
     # wait for initial message
     data = await websocket.receive_bytes()
@@ -169,7 +180,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             elif message_type == "execute":
                 verbose_print("Executing task", message_content, client_id)
-                task_type = ProtoGenerator.to_pascal_case(message_content.name)
+                task_type = adapt_name(message_content.name)
                 task_data = message_content.request.to_dict()
                 task_id = message_content.task_id
                 
@@ -280,7 +291,7 @@ if __name__ == "__main__":
     if args.tasks:
         load_tasks(args.tasks)
     else:
-        load_tasks()  # Load all tasks
+        load_tasks() # Load all tasks
     
     cert_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'cert.pem')
     key_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'key.pem')

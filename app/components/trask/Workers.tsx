@@ -102,7 +102,6 @@ export const Workers: React.FC<WorkersComponentProps> = ({ queue }) => {
 						id={id}
 						worker={worker}
 						onRemove={removeWorker}
-						onRequestJob={() => worker.requestJob()}
 					/>
 					// <li key={id}>
 					// 	Worker {id.split("-")[0]} - Status: {worker.status}
