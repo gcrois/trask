@@ -180,7 +180,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             elif message_type == "execute":
                 verbose_print("Executing task", message_content, client_id)
-                task_type = adapt_name(message_content.name)
+                task_type = ProtoGenerator.to_pascal_case(message_content.name)
+                super_pascal = adapt_name(task_type)
                 task_data = message_content.request.to_dict()
                 task_id = message_content.task_id
                 
@@ -191,8 +192,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     'input': task_data
                 }
                 
-                if task_type in TASKS:
-                    task_class = TASKS[task_type]
+                if super_pascal in TASKS:
+                    task_class = TASKS[super_pascal]
                     response_class = getattr(proto_tasks, f"{task_type}Response")
                     
                     async def send_update(update):

@@ -24,7 +24,8 @@ class Text2Text(Task):
 
     @classmethod
     async def execute(cls,
-        messages: List[Tuple[str, str]],
+        roles: List[str],
+        messages: List[str],
         max_tokens: int = 100,
         client = client,
         send_update: Callable[[str], Awaitable[None]] = noop
@@ -41,7 +42,7 @@ class Text2Text(Task):
         formatted_messages = [
             {"role": "system", "content": "You are a helpful assistant."}
         ]
-        for role, content in messages:
+        for role, content in zip(roles, messages):
             formatted_messages.append({"role": role, "content": content})
         
         await send_update("Sending request to OpenAI")
