@@ -282,4 +282,17 @@ if __name__ == "__main__":
     else:
         load_tasks()  # Load all tasks
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    cert_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'cert.pem')
+    key_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'key.pem')
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        print("SSL certificate and key found. Running server with SSL.")
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=8000,
+            ssl_keyfile=key_path,
+            ssl_certfile=cert_path
+        )
+    else:
+        print("SSL certificate and key not found. Running server without SSL.")
+        uvicorn.run(app, host="0.0.0.0", port=8000)
