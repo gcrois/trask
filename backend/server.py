@@ -10,13 +10,20 @@ import atexit
 import importlib
 import betterproto
 
+from time import sleep
+
 from protobuf_generator import ProtoGenerator
 
-from tasks.task import Task, File
+from tasks.task import Task
+from tasks.file import File
+
+import base64
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from proto.py import tasks as proto_tasks  # type: ignore
 from proto.py import websocket as wsmsg
+
+file_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files')
 
 app = FastAPI()
 app.add_middleware(
@@ -31,7 +38,7 @@ active_connections: Dict[str, WebSocket] = {}
 request_logs: List[Dict] = []
 TASKS: Dict[str, Type[Task]] = {}
 loaded_tasks: Set[str] = set()
-available_files: Set[str] = set()
+available_files: Dict[str, File] = {}
 
 def adapt_name(task_name):
     pascal = ProtoGenerator.to_pascal_case(task_name)
@@ -57,6 +64,11 @@ def dump_logs():
 
 atexit.register(dump_logs)
 
+def base64_to_file(base64_str: str, file_path: str):
+    header, encoded = base64_str.split(",", 1)
+    with open(file_path, 'wb') as f:
+        f.write(base64.b64decode(encoded))
+
 def load_tasks(task_names: List[str] = []):
     global TASKS
     tasks_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend/tasks')
@@ -70,17 +82,30 @@ def load_tasks(task_names: List[str] = []):
                 if isinstance(obj, type) and issubclass(obj, Task) and obj != Task:
                     if not task_names or name in task_names:
                         TASKS[name] = obj
-                        print(f"Loaded task: {name}")
+                        print(f"Enabled task: {name}")
+    
+    for task in task_names:
+        if task not in TASKS:
+            print(f"Task not found, cannot enable: {task}")
+
+def get_task_files(task: Dict) -> Dict[str, str]:
+    files = {}
+    
+    for param, value in task.items():
+        # check if value has a field "type", and if it has value "file_reference"
+        if isinstance(value, dict) and value.get('type') == 'file_reference':
+            files[param] = value['id']
+            
+    return files
 
 def select_task(available_tasks: List[Dict]):
-
     print("Available tasks:", [t['name'] for t in available_tasks])
     print("Adapted names:", [adapt_name(t['name']) for t in available_tasks])
     # Prioritize tasks that are already loaded and have all required files
     for task in available_tasks:
         task_name = adapt_name(task['name'])
         if task_name in loaded_tasks:
-            task_files = set(file['id'] for file in task.get('files', []))
+            task_files = set(get_task_files(task).values())
             if task_files.issubset(available_files):
                 return task
     
@@ -92,7 +117,7 @@ def select_task(available_tasks: List[Dict]):
     
     # now, tasks that have all required files and are in TASKS
     for task in available_tasks:
-        task_files = set(file['id'] for file in task.get('files', []))
+        task_files = set(get_task_files(task).values())
         if task_files.issubset(available_files) and adapt_name(task['name']) in TASKS:
             return task
         
@@ -124,8 +149,6 @@ def verbose_print(action: str, message: Any, client_id: str = "NA"):
     
     print("---------------------")
 
-# Now, let's update our websocket_endpoint function to use this verbose_print function:
-
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
@@ -146,6 +169,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     
     # send server handshake
     await websocket.send_bytes(bytes(wsmsg.ServerMessage(handshake=wsmsg.ServerHandshake("0.0.0"))))
+    
+    # todo: kill this lmao
+    sleep(1)
     
     # to start off, ask for available tasks
     await websocket.send_bytes(bytes(wsmsg.ServerMessage(request_available_tasks=wsmsg.RequestAvailableTasks(client_id=client_id))))
@@ -179,11 +205,41 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     response = wsmsg.ServerMessage(no_task_available=wsmsg.NoTaskAvailable())
             
             elif message_type == "execute":
-                verbose_print("Executing task", message_content, client_id)
-                task_type = ProtoGenerator.to_pascal_case(message_content.name)
+                content: wsmsg.ExecuteTask = message_content
+                task_type = ProtoGenerator.to_pascal_case(content.name)
                 super_pascal = adapt_name(task_type)
-                task_data = message_content.request.to_dict()
-                task_id = message_content.task_id
+                task_data = content.request.to_dict()
+                task_id = content.task_id
+                
+                verbose_print("Executing task", task_data, client_id)
+                print("TASK FILES", get_task_files(task_data[task_type.lower()]))
+                
+                # get file object for each file id
+                files = get_task_files(task_data[task_type.lower()])
+
+                for param, file_id in files.items():
+                    if file_id in available_files:
+                        task_data[task_type.lower()][param] = available_files[file_id]
+                    else:
+                        # request file
+                        file_request = wsmsg.ServerMessage(file_request=wsmsg.FileRequest(file_id=file_id))
+                        # send file request
+                        await websocket.send_bytes(bytes(file_request))
+                        # wait for file response
+                        file_response = await websocket.receive_bytes()
+                        # parse file response
+                        parsed_response = wsmsg.ClientMessage().parse(file_response)
+                        print("PARSED RESPONSE", parsed_response)
+                        # get file content
+                        slim = parsed_response.file_response.content
+                        print("FILE CONTENT", slim)
+                        # save base64 string to file
+                        file_path = os.path.join(file_dir, file_id.split(':')[-1])
+                        base64_to_file(slim, file_path)
+                        # create File object
+                        file = File(file_path)
+                        task_data[task_type.lower()][param] = file
+                        available_files[file_id] = file
                 
                 request_log = {
                     'time': datetime.now(),

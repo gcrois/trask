@@ -32,7 +32,8 @@ class Text2Text(Task):
     ) -> str:
         """
         Generate text based on a given list of messages.
-        :param messages: A list of tuples, where each tuple contains (role, content)
+        :param roles: A list of roles for each message
+        :param messages: A list of messages to generate text from
         :param max_tokens: Maximum number of tokens in the response
         :param client: OpenAI client (excluded from protobuf)
         :param send_update: Function to send incremental updates (excluded from protobuf)

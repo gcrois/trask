@@ -1,4 +1,4 @@
-from tasks.task import Task, File
+from tasks.task import Task
 
 class Capitalize(Task):
     def __init__(self):

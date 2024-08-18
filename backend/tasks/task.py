@@ -53,11 +53,7 @@ class Task(ABC):
 
     def get_proto_info(self):
         return self._proto_info
-    
-class File:
-    def __init__(self):
-        pass
-
+        
 # Example usage:
 # class MyTask(Task):
 #     def __init__(self):

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, get_args, get_origin, Type
-from tasks.task import Task, File
+from tasks.task import Task
+from tasks.file import File
 
 class ProtoGenerator:
     def __init__(self) -> None:
@@ -26,7 +27,7 @@ class ProtoGenerator:
             bool: "bool",
             float: "float",
             bytes: "bytes",
-            File: "FileReference"
+            File: "File"
         }
         
         origin = get_origin(pytype)
