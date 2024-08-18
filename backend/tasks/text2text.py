@@ -48,7 +48,7 @@ class Text2Text(Task):
         await send_update("Sending request to OpenAI")
         
         response = client.chat.completions.create(
-            model="gpt-4-mini",
+            model="gpt-4o-mini",
             messages=formatted_messages,
             max_tokens=max_tokens,
         )
