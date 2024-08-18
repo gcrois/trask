@@ -331,7 +331,7 @@ export class APIWorker extends BaseWorker {
 
     dispose = () => {
         verbosePrint("Disposing API worker", this.id);
-        this.ws.close();
+        this.ws.close(1111, "Worker disposed");
     };
 
     private blobToBase64(blob: Blob): Promise<string> {
