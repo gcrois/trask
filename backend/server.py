@@ -1,19 +1,23 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
 import json
 import argparse
-from typing import Dict, List, Type, Set
+from typing import Dict, List, Type, Set, Any
 from datetime import datetime
 import atexit
 import importlib
 import asyncio
+import betterproto
+
+from protobuf_generator import ProtoGenerator
 
 from tasks.task import Task, File
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from proto.py import tasks as proto_tasks  # type: ignore
+from proto.py import websocket as wsmsg
 
 app = FastAPI()
 app.add_middleware(
@@ -58,42 +62,116 @@ def load_tasks(task_names: List[str] = []):
                         print(f"Loaded task: {name}")
 
 def select_task(available_tasks: List[Dict]):
+    def adapt_name(task_name):
+        return ProtoGenerator.to_pascal_case(task_name)
+    
     # Prioritize tasks that are already loaded and have all required files
     for task in available_tasks:
-        task_name = task['name']
+        task_name = adapt_name(task['name'])
         if task_name in loaded_tasks:
             task_files = set(file['id'] for file in task.get('files', []))
             if task_files.issubset(available_files):
                 return task
+    
+    # now, prioritize tasks that are already loaded
+    for task in available_tasks:
+        task_name = adapt_name(task['name'])
+        if task_name in loaded_tasks:
+            return task
+    
+    # now, tasks that have all required files and are in TASKS
+    for task in available_tasks:
+        task_files = set(file['id'] for file in task.get('files', []))
+        if task_files.issubset(available_files) and adapt_name(task['name']) in TASKS:
+            return task
+        
+    # finally, take any task in TASKS
+    for task in available_tasks:
+        if adapt_name(task['name']) in TASKS:
+            return task
 
-    # If no loaded task is suitable, choose the first available task
-    return available_tasks[0] if available_tasks else None
+VERBOSE = True  # Set this to False to disable verbose printing
+
+def verbose_print(action: str, message: Any, client_id: str = "NA"):
+    if not VERBOSE:
+        return
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    client_info = f"Client {client_id}: " if client_id else ""
+    
+    print(f"[{timestamp}] {client_info}{action}")
+    
+    if isinstance(message, (wsmsg.ClientMessage, wsmsg.ServerMessage)):
+        # For protobuf messages, we'll print the dictionary representation
+        print(json.dumps(message.to_dict(), indent=2))
+    elif isinstance(message, bytes):
+        # For raw bytes, we'll print the length and the first few bytes
+        print(f"Raw bytes (length: {len(message)}): {message[:20]}...") # type: ignore
+    else:
+        # For other types, we'll use the default string representation
+        print(str(message))
+    
+    print("---------------------")
+
+# Now, let's update our websocket_endpoint function to use this verbose_print function:
 
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
     active_connections[client_id] = websocket
-    print(f"Client {client_id} connected, active connections: {len(active_connections)}")
+    verbose_print("Connection established", f"Active connections: {len(active_connections)}", client_id)
+    
+    # wait for initial message
+    data = await websocket.receive_bytes()
+    # parse the message
+    client_message = wsmsg.ClientMessage().parse(data)
+    # verify that its client handshake
+    message_type, version = betterproto.which_one_of(client_message, "message")
+    if message_type != "handshake":
+        verbose_print("Invalid handshake message", client_message, client_id)
+        await websocket.close(1000, "Invalid handshake message")
+        return
+    verbose_print("Received handshake", client_message, client_id)
+    
+    # send server handshake
+    await websocket.send_bytes(bytes(wsmsg.ServerMessage(handshake=wsmsg.ServerHandshake("0.0.0"))))
+    
+    # to start off, ask for available tasks
+    await websocket.send_bytes(bytes(wsmsg.ServerMessage(request_available_tasks=wsmsg.RequestAvailableTasks(client_id=client_id))))
+    verbose_print("Requested available tasks from", "", client_id)
     
     try:
         while True:
-            data = await websocket.receive_json()
-            if data['type'] == 'available_tasks':
-                available_tasks = data['tasks']
+            data = await websocket.receive_bytes()
+            verbose_print("Received raw message", data, client_id)
+            
+            client_message = wsmsg.ClientMessage().parse(data)
+            verbose_print("Parsed client message", client_message, client_id)
+            
+            message_type, message_content = betterproto.which_one_of(client_message, "message")
+            
+            if message_type == "available_tasks":
+                verbose_print("Processing available tasks", message_content, client_id)
+                available_tasks = [
+                    {"id": task.id, "name": task.name, "request": task.request.to_dict()}
+                    for task in message_content.tasks
+                ]
                 selected_task = select_task(available_tasks)
                 if selected_task:
-                    await websocket.send_json({
-                        'type': 'accept_task',
-                        'taskId': selected_task['id']
-                    })
+                    response = wsmsg.ServerMessage(
+                        accept_task=wsmsg.AcceptTask(task_id=selected_task['id'])
+                    )
+                    verbose_print("Sending response", response, client_id)
+                    await websocket.send_bytes(bytes(response))
                 else:
-                    await websocket.send_json({
-                        'type': 'no_task_available'
-                    })
-            elif data['type'] == 'execute':
-                task_type = data['name']
-                task_data = data['request']
-                task_id = data['taskId']
+                    print(f"No task available from list -- eligle task types: {TASKS.keys()}")
+                    response = wsmsg.ServerMessage(no_task_available=wsmsg.NoTaskAvailable())
+            
+            elif message_type == "execute":
+                verbose_print("Executing task", message_content, client_id)
+                task_type = ProtoGenerator.to_pascal_case(message_content.name)
+                task_data = message_content.request.to_dict()
+                task_id = message_content.task_id
                 
                 request_log = {
                     'time': datetime.now(),
@@ -108,63 +186,90 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     
                     async def send_update(update):
                         wrapped = response_class(result=update)
-                        await websocket.send_json({
-                            'type': 'incrementalUpdate',
-                            'taskId': task_id,
-                            'update': proto_tasks.TaskResponse(**{task_type.lower(): wrapped}).to_dict()
-                        })
-                    
-                    if task_type not in loaded_tasks:
-                        task_class.load()
-                        loaded_tasks.add(task_type)
-                    
+                        incremental_update = wsmsg.ServerMessage(
+                            incremental_update=wsmsg.IncrementalUpdate(
+                                task_id=task_id,
+                                update=proto_tasks.TaskResponse(**{task_type.lower(): wrapped})
+                            )
+                        )
+                        verbose_print("Sending incremental update", incremental_update, client_id)
+                        await websocket.send_bytes(bytes(incremental_update))
                     try:
-                        result = await task_class.execute(**task_data, send_update=send_update)
+                        if task_type not in loaded_tasks:
+                            try:
+                                task_class.load()
+                            except RuntimeError as e:
+                                # match CUDA memory error
+                                if "CUDA" in str(e):
+                                    # try unloading all tasks and retry
+                                    for task in loaded_tasks:
+                                        TASKS[task].unload()
+                                    loaded_tasks.clear()
+                                    task_class.load()
+                                    
+                            loaded_tasks.add(task_type)
+                    
+                        result = await task_class.execute(**task_data[task_type.lower()], send_update=send_update)
                         task_response = response_class(result=result)
-                        response = {
-                            'type': 'result',
-                            'taskId': task_id,
-                            'result': proto_tasks.TaskResponse(**{task_type.lower(): task_response}).to_dict()
-                        }
-                        await websocket.send_json(response)
-                        request_log['response'] = response
+                        response = wsmsg.ServerMessage(
+                            task_result=wsmsg.TaskResult(
+                                task_id=task_id,
+                                result=proto_tasks.TaskResponse(**{task_type.lower(): task_response})
+                            )
+                        )
+                        verbose_print("Sending task result", response, client_id)
+                        await websocket.send_bytes(bytes(response))
+                        request_log['response'] = response.to_dict()
+
                     except Exception as e:
-                        error_response = {
-                            'type': 'error',
-                            'taskId': task_id,
-                            'error': str(e)
-                        }
-                        await websocket.send_json(error_response)
-                        request_log['response'] = error_response
+                        error_response = wsmsg.ServerMessage(
+                            error=wsmsg.ErrorResponse(
+                                task_id=task_id,
+                                error=str(e)
+                            )
+                        )
+                        verbose_print("Sending error response", error_response, client_id)
+                        await websocket.send_bytes(bytes(error_response))
+                        request_log['response'] = error_response.to_dict()
                 else:
-                    error_response = {
-                        'type': 'error',
-                        'taskId': task_id,
-                        'error': f"Unknown task type: {task_type}"
-                    }
-                    await websocket.send_json(error_response)
-                    request_log['response'] = error_response
+                    error_response = wsmsg.ServerMessage(
+                        error=wsmsg.ErrorResponse(
+                            task_id=task_id,
+                            error=f"Unknown task type: {task_type} -- available tasks: {list(TASKS.keys())}"
+                        )
+                    )
+                    verbose_print("Sending error response for unknown task type", error_response, client_id)
+                    await websocket.send_bytes(bytes(error_response))
+                    request_log['response'] = error_response.to_dict()
                 
                 request_logs.append(request_log)
-            elif data['type'] == 'file_update':
-                file_id = data['fileId']
-                if data['action'] == 'add':
-                    available_files.add(file_id)
-                elif data['action'] == 'remove':
-                    available_files.discard(file_id)
-            elif data['type'] == 'pause':
+            
+            elif message_type == "file_response":
+                verbose_print("Received file response", message_content, client_id)
+                # Handle file response
+                file_id = message_content.file_id
+                content = message_content.content
+                # Process the file content as needed
+            
+            elif message_type == "pause":
+                verbose_print("Received pause request", message_content, client_id)
                 # Implement pause functionality
                 pass
-            elif data['type'] == 'resume':
+            
+            elif message_type == "resume":
+                verbose_print("Received resume request", message_content, client_id)
                 # Implement resume functionality
                 pass
+            
+            else:
+                verbose_print("Received unknown message type", f"{message_type}: {message_content}", client_id)
                 
-    except Exception as e:
-        print(f"WebSocket error: {e}")
+    except WebSocketDisconnect:
+        verbose_print("WebSocket disconnected", "", client_id)
     finally:
-        print(f"Client {client_id} disconnected, active connections: {len(active_connections)}")
         del active_connections[client_id]
-
+        verbose_print("Connection closed", f"Active connections: {len(active_connections)}", client_id)
+        
 if __name__ == "__main__":
     import uvicorn
     

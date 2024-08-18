@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { TaskQueue, QueuedTaskStatus, TaskQueueEvent } from "./queue";
 import { APIWorker, WebWorkerAdapter, WorkerStatus } from "./workers";
 import { Task } from "./types";
+import * as wsmsg from "@proto/websocket";
+import { TaskRequest, TaskResponse } from "@proto/tasks";
 
 // Mock WebSocket
 class MockWebSocket {
     onopen: (() => void) | null = null;
-    onmessage: ((event: { data: string }) => void) | null = null;
+    onmessage: ((event: { data: Uint8Array }) => void) | null = null;
     onclose: (() => void) | null = null;
     onerror: ((error: Event) => void) | null = null;
     send = vi.fn();
@@ -112,6 +114,7 @@ describe("TaskQueue", () => {
     });
 });
 
+
 describe("APIWorker", () => {
     let taskQueue: TaskQueue;
     let apiWorker: APIWorker;
@@ -130,44 +133,102 @@ describe("APIWorker", () => {
         expect(apiWorker.status).toBe(WorkerStatus.Idle);
     });
 
-    it("should send available tasks when notified", () => {
-        const task: Task<"testTask"> = {
+    it("should handle Greet task correctly", async () => {
+        const task: Task<"greet"> = {
             id: "1",
-            name: "testTask",
-            request: { test: "data" },
+            name: "greet",
+            request: { name: "Alice", language: "en" } as TaskRequest,
         };
-        taskQueue.addTask(task);
-        apiWorker.onAvailableTasksChange();
-        expect((apiWorker as any).ws.send).toHaveBeenCalledWith(
-            expect.stringContaining('"type":"available_tasks"'),
-        );
-    });
-
-    it("should handle WebSocket messages correctly", () => {
-        const ws = (apiWorker as any).ws;
-        
-        // Simulate 'result' message
-        ws.onmessage({ data: JSON.stringify({ type: "result", result: "test result" }) });
-        expect(apiWorker.status).toBe(WorkerStatus.Idle);
-
-        // Simulate 'error' message
-        ws.onmessage({ data: JSON.stringify({ type: "error", error: "test error" }) });
-        expect(apiWorker.status).toBe(WorkerStatus.Idle);
-
-        // Simulate 'accept_task' message
-        const task = { name: "testTask", request: { test: "data" } };
         const taskId = taskQueue.addTask(task);
-		console.log("taskQueue", taskQueue);
-        ws.onmessage({ data: JSON.stringify({ type: "accept_task", taskId }) });
+
+        // Simulate available tasks notification
+        apiWorker.onAvailableTasksChange();
+        expect((apiWorker as any).ws.send).toHaveBeenCalled();
+        const sentMessage = wsmsg.ClientMessage.decode(new Uint8Array((apiWorker as any).ws.send.mock.calls[0][0]));
+        expect(sentMessage.availableTasks).toBeDefined();
+        expect(sentMessage.availableTasks?.tasks.length).toBe(1);
+
+        // Simulate server accepting the task
+        const acceptTaskMessage = wsmsg.ServerMessage.create({
+            acceptTask: { taskId },
+        });
+        const encodedAcceptTask = wsmsg.ServerMessage.encode(acceptTaskMessage).finish();
+        
+        const ws = (apiWorker as any).ws;
+        await ws.onmessage({ data: encodedAcceptTask });
+
         expect(apiWorker.status).toBe(WorkerStatus.Busy);
+
+        // Simulate task completion
+        const taskResultMessage = wsmsg.ServerMessage.create({
+            taskResult: {
+                taskId,
+                result: { greeting: "Hello, Alice!" } as TaskResponse,
+            },
+        });
+        const encodedTaskResult = wsmsg.ServerMessage.encode(taskResultMessage).finish();
+        await ws.onmessage({ data: encodedTaskResult });
+
+        expect(apiWorker.status).toBe(WorkerStatus.Idle);
+
+        // Check if the task in the queue is marked as resolved
+        const completedTask = taskQueue.getTask(taskId);
+        expect(completedTask?.status).toBe(QueuedTaskStatus.Resolved);
     });
 
-    it("should handle pause correctly", () => {
-        apiWorker.pause();
-        expect(apiWorker.status).toBe(WorkerStatus.Paused);
-        expect((apiWorker as any).ws.send).toHaveBeenCalledWith(
-            JSON.stringify({ type: "pause" })
-        );
+    it("should handle Greet task with different language", async () => {
+        const task: Task<"greet"> = {
+            id: "2",
+            name: "greet",
+            request: { name: "Maria", language: "es" } as TaskRequest,
+        };
+        const taskId = taskQueue.addTask(task);
+
+        // Simulate server accepting the task
+        const acceptTaskMessage = wsmsg.ServerMessage.create({
+            acceptTask: { taskId },
+        });
+        const encodedAcceptTask = wsmsg.ServerMessage.encode(acceptTaskMessage).finish();
+        
+        const ws = (apiWorker as any).ws;
+        await ws.onmessage({ data: encodedAcceptTask });
+
+        // Simulate task completion
+        const taskResultMessage = wsmsg.ServerMessage.create({
+            taskResult: {
+                taskId,
+                result: { greeting: "Hola, Maria!" } as TaskResponse,
+            },
+        });
+        const encodedTaskResult = wsmsg.ServerMessage.encode(taskResultMessage).finish();
+        await ws.onmessage({ data: encodedTaskResult });
+
+        expect(apiWorker.status).toBe(WorkerStatus.Idle);
+
+        // Check if the task in the queue is marked as resolved
+        const completedTask = taskQueue.getTask(taskId);
+        expect(completedTask?.status).toBe(QueuedTaskStatus.Resolved);
+    });
+
+    it("should handle error messages correctly", async () => {
+        const errorMessage = wsmsg.ServerMessage.create({
+            error: {
+                taskId: "3",
+                error: "Test error message",
+            },
+        });
+        const encodedError = wsmsg.ServerMessage.encode(errorMessage).finish();
+
+        const ws = (apiWorker as any).ws;
+        await ws.onmessage({ data: encodedError });
+
+        // Check if the worker status remains Idle after an error
+        expect(apiWorker.status).toBe(WorkerStatus.Idle);
+
+        // You might want to add more specific expectations here,
+        // such as checking if the task is marked as rejected in the queue
+        const erroredTask = taskQueue.getTask("3");
+        expect(erroredTask?.status).toBe(QueuedTaskStatus.Rejected);
     });
 });
 

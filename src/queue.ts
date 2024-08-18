@@ -22,6 +22,7 @@ export interface QueuedTask<T extends TaskType = any> {
 	id: QueueId;
 	timestamp: number;
 	status: QueuedTaskStatus;
+	message?: string;
 	worker?: string;
 	task: Task<T>;
 	queuedTime: number;
@@ -43,10 +44,10 @@ export class TaskQueue {
 	} = {};
 	private fileReferences: Map<string, Blob> = new Map();
 
-	addFile(blob: Blob): FileReference {
+	addFile(blob: Blob, fileId?: string): FileReference {
 		const ref = {
 			type: "file_reference" as const,
-			id: uuid(),
+			id: fileId ?? uuid(),
 			size: blob.size,
 			hash: "hash",
 		};
@@ -176,6 +177,22 @@ export class TaskQueue {
 		const task = this.tasks.get(id);
 		if (task) {
 			this.tasks.set(id, { ...task, status: QueuedTaskStatus.Cancelled });
+			this.emit(TaskQueueEvent.QueueChange);
+		}
+	}
+
+	errorTask(id: string, error: string) {
+		const task = this.tasks.get(id);
+		if (task) {
+			task.reject(error);
+			this.emit(TaskQueueEvent.QueueChange);
+		}
+	}
+
+	resolveTask(id: string, response: any) {
+		const task = this.tasks.get(id);
+		if (task) {
+			task.resolve(response);
 			this.emit(TaskQueueEvent.QueueChange);
 		}
 	}

@@ -76,7 +76,7 @@ export const Tasks: React.FC<TasksComponentProps> = ({ queue }) => {
 	const [multiplyA, setMultiplyA] = useState("");
 	const [multiplyB, setMultiplyB] = useState("");
 
-	const addTask = <T extends TaskType>(task: Task<T>) => {
+	const addTask = <T extends TaskType>(task: Omit<Task<T>, "id">) => {
 		queue.addTask(task);
 	};
 
@@ -92,7 +92,7 @@ export const Tasks: React.FC<TasksComponentProps> = ({ queue }) => {
 				/>
 				<button
 					onClick={() =>
-						addTask({ name: "capitalize", request: { input } })
+						addTask({ name: "capitalize", request: { text: input } })
 					}
 				>
 					Add Capitalize Task

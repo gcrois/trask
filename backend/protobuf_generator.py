@@ -50,6 +50,10 @@ class ProtoGenerator:
     def to_camel_case(snake_str: str) -> str:
         components = snake_str.split('_')
         return components[0] + ''.join(x.capitalize() for x in components[1:])
+    
+    @staticmethod
+    def to_snake_case(camel_str: str) -> str:
+        return ''.join(['_' + i.lower() if i.isupper() else i for i in camel_str]).lstrip('_')
 
     def generate_new_request_message(self, task_name: str, params: Dict[str, Any], ignored_params: Dict[str, Any]) -> Tuple[str, Dict[str, str]]:
         print(f"Generating message for {task_name}")

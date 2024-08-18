@@ -14,7 +14,7 @@
 		"lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix; stylelint '**/*.{css,scss}' --fix",
 		"style": "prettier --write . && stylelint '**/*.{css,scss}' && npm run lint",
 		"preview": "vite preview",
-		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts -I ../backend tasks.proto",
+		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts -I ../backend tasks.proto websocket.proto && sed -i '1ifrom .tasks import *\n' ./py/websocket.py",
 		"test": "vitest"
 	},
 	"dependencies": {

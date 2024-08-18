@@ -7,7 +7,6 @@ import "./styles/App.scss";
 import "./styles/Trask.scss";
 
 import { Trask } from "./components/trask/Trask";
-// import { Tile } from "./components/structural/Tile";
 import { View } from "./components/structural/View";
 import { Header } from "./components/branded/Header";
 import { Footer } from "./components/branded/Footer";

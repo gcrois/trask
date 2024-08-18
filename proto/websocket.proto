@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package websocket;
+
+import "tasks.proto";
+
+message ClientMessage {
+  oneof message {
+    AvailableTasks available_tasks = 1;
+    ExecuteTask execute = 2;
+    FileResponse file_response = 3;
+    Pause pause = 4;
+    Resume resume = 5;
+    ClientHandshake handshake = 6;
+  }
+}
+
+message ServerMessage {
+  oneof message {
+    AcceptTask accept_task = 1;
+    NoTaskAvailable no_task_available = 2;
+    TaskResult task_result = 3;
+    IncrementalUpdate incremental_update = 4;
+    ErrorResponse error = 5;
+    FileRequest file_request = 6;
+    FileSend file_send = 7;
+    RequestAvailableTasks request_available_tasks = 8;
+    ServerHandshake handshake = 9;
+  }
+}
+
+message RequestAvailableTasks {
+    string client_id = 1;
+}
+
+message AvailableTasks {
+  repeated Task tasks = 1;
+}
+
+message Task {
+  string id = 1;
+  string name = 2;
+  TaskRequest request = 3;
+}
+
+message ExecuteTask {
+  string task_id = 1;
+  string name = 2;
+  TaskRequest request = 3;
+}
+
+message Pause {}
+
+message Resume {}
+
+message ClientHandshake {
+  string version = 1;
+}
+
+message ServerHandshake {
+  string version = 1;
+}
+
+message AcceptTask {
+  string task_id = 1;
+}
+
+message NoTaskAvailable {}
+
+message TaskResult {
+  string task_id = 1;
+  TaskResponse result = 2;
+}
+
+message IncrementalUpdate {
+  string task_id = 1;
+  TaskResponse update = 2;
+}
+
+message ErrorResponse {
+  string task_id = 1;
+  string error = 2;
+}
+
+message FileRequest {
+  string file_id = 1;
+}
+
+message FileResponse {
+  string file_id = 1;
+  string content = 2; // base64 encoded file content
+}
+
+message FileSend {
+  string file_id = 1;
+  string content = 2; // base64 encoded file content
+}

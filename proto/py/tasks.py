@@ -7,9 +7,19 @@ import betterproto
 
 
 @dataclass
+class GreetRequest(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    language: str = betterproto.string_field(2)
+
+
+@dataclass
+class GreetResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
 class CapitalizeRequest(betterproto.Message):
     text: str = betterproto.string_field(1)
-    file: "FileReference" = betterproto.message_field(2)
 
 
 @dataclass
@@ -19,9 +29,11 @@ class CapitalizeResponse(betterproto.Message):
 
 @dataclass
 class TaskRequest(betterproto.Message):
-    capitalize: "CapitalizeRequest" = betterproto.message_field(1, group="task")
+    greet: "GreetRequest" = betterproto.message_field(1, group="task")
+    capitalize: "CapitalizeRequest" = betterproto.message_field(2, group="task")
 
 
 @dataclass
 class TaskResponse(betterproto.Message):
-    capitalize: "CapitalizeResponse" = betterproto.message_field(1, group="response")
+    greet: "GreetResponse" = betterproto.message_field(1, group="response")
+    capitalize: "CapitalizeResponse" = betterproto.message_field(2, group="response")

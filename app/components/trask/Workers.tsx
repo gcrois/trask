@@ -25,6 +25,11 @@ export const WorkerComponent: React.FC<WorkerComponentProps> = ({
 				>
 					Status: {worker.status}
 				</span>
+				<span
+					className={`worker-message`}
+				>
+					{worker.message}
+				</span>
 			</div>
 			<div className="worker-actions">
 				<button onClick={() => onRemove(id)}>Remove Worker</button>

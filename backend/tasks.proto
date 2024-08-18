@@ -2,7 +2,22 @@ syntax = "proto3";
 
 import "definitions.proto";
 
+message GreetRequest {
+  // Ignored parameters:
+  // send_update: <class 'inspect._empty'>
+
+  string name = 1;
+  string language = 2;
+}
+
+message GreetResponse {
+  string result = 1;
+}
+
 message CapitalizeRequest {
+  // Ignored parameters:
+  // send_update: <class 'inspect._empty'>
+
   string text = 1;
 }
 
@@ -12,12 +27,14 @@ message CapitalizeResponse {
 
 message TaskRequest {
   oneof task {
-    CapitalizeRequest capitalize = 1;
+    GreetRequest greet = 1;
+    CapitalizeRequest capitalize = 2;
   }
 }
 
 message TaskResponse {
   oneof response {
-    CapitalizeResponse capitalize = 1;
+    GreetResponse greet = 1;
+    CapitalizeResponse capitalize = 2;
   }
 }

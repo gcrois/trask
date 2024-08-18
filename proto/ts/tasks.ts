@@ -6,13 +6,28 @@
 
 /* eslint-disable */
 import * as _m0 from "protobufjs/minimal";
-import { FileReference } from "./definitions";
 
 export const protobufPackage = "";
 
+/**
+ * Ignored parameters:
+ * send_update: <class 'inspect._empty'>
+ */
+export interface GreetRequest {
+  name: string;
+  language: string;
+}
+
+export interface GreetResponse {
+  result: string;
+}
+
+/**
+ * Ignored parameters:
+ * send_update: <class 'inspect._empty'>
+ */
 export interface CapitalizeRequest {
   text: string;
-  file: FileReference | undefined;
 }
 
 export interface CapitalizeResponse {
@@ -20,24 +35,154 @@ export interface CapitalizeResponse {
 }
 
 export interface TaskRequest {
+  greet?: GreetRequest | undefined;
   capitalize?: CapitalizeRequest | undefined;
 }
 
 export interface TaskResponse {
+  greet?: GreetResponse | undefined;
   capitalize?: CapitalizeResponse | undefined;
 }
 
+function createBaseGreetRequest(): GreetRequest {
+  return { name: "", language: "" };
+}
+
+export const GreetRequest = {
+  encode(message: GreetRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.language !== "") {
+      writer.uint32(18).string(message.language);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GreetRequest {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGreetRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.language = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GreetRequest {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      language: isSet(object.language) ? globalThis.String(object.language) : "",
+    };
+  },
+
+  toJSON(message: GreetRequest): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.language !== "") {
+      obj.language = message.language;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GreetRequest>, I>>(base?: I): GreetRequest {
+    return GreetRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GreetRequest>, I>>(object: I): GreetRequest {
+    const message = createBaseGreetRequest();
+    message.name = object.name ?? "";
+    message.language = object.language ?? "";
+    return message;
+  },
+};
+
+function createBaseGreetResponse(): GreetResponse {
+  return { result: "" };
+}
+
+export const GreetResponse = {
+  encode(message: GreetResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.result !== "") {
+      writer.uint32(10).string(message.result);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GreetResponse {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGreetResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GreetResponse {
+    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
+  },
+
+  toJSON(message: GreetResponse): unknown {
+    const obj: any = {};
+    if (message.result !== "") {
+      obj.result = message.result;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GreetResponse>, I>>(base?: I): GreetResponse {
+    return GreetResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GreetResponse>, I>>(object: I): GreetResponse {
+    const message = createBaseGreetResponse();
+    message.result = object.result ?? "";
+    return message;
+  },
+};
+
 function createBaseCapitalizeRequest(): CapitalizeRequest {
-  return { text: "", file: undefined };
+  return { text: "" };
 }
 
 export const CapitalizeRequest = {
   encode(message: CapitalizeRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
-    }
-    if (message.file !== undefined) {
-      FileReference.encode(message.file, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -56,13 +201,6 @@ export const CapitalizeRequest = {
 
           message.text = reader.string();
           continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.file = FileReference.decode(reader, reader.uint32());
-          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -73,19 +211,13 @@ export const CapitalizeRequest = {
   },
 
   fromJSON(object: any): CapitalizeRequest {
-    return {
-      text: isSet(object.text) ? globalThis.String(object.text) : "",
-      file: isSet(object.file) ? FileReference.fromJSON(object.file) : undefined,
-    };
+    return { text: isSet(object.text) ? globalThis.String(object.text) : "" };
   },
 
   toJSON(message: CapitalizeRequest): unknown {
     const obj: any = {};
     if (message.text !== "") {
       obj.text = message.text;
-    }
-    if (message.file !== undefined) {
-      obj.file = FileReference.toJSON(message.file);
     }
     return obj;
   },
@@ -96,9 +228,6 @@ export const CapitalizeRequest = {
   fromPartial<I extends Exact<DeepPartial<CapitalizeRequest>, I>>(object: I): CapitalizeRequest {
     const message = createBaseCapitalizeRequest();
     message.text = object.text ?? "";
-    message.file = (object.file !== undefined && object.file !== null)
-      ? FileReference.fromPartial(object.file)
-      : undefined;
     return message;
   },
 };
@@ -161,13 +290,16 @@ export const CapitalizeResponse = {
 };
 
 function createBaseTaskRequest(): TaskRequest {
-  return { capitalize: undefined };
+  return { greet: undefined, capitalize: undefined };
 }
 
 export const TaskRequest = {
   encode(message: TaskRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.greet !== undefined) {
+      GreetRequest.encode(message.greet, writer.uint32(10).fork()).ldelim();
+    }
     if (message.capitalize !== undefined) {
-      CapitalizeRequest.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
+      CapitalizeRequest.encode(message.capitalize, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -184,6 +316,13 @@ export const TaskRequest = {
             break;
           }
 
+          message.greet = GreetRequest.decode(reader, reader.uint32());
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.capitalize = CapitalizeRequest.decode(reader, reader.uint32());
           continue;
       }
@@ -196,11 +335,17 @@ export const TaskRequest = {
   },
 
   fromJSON(object: any): TaskRequest {
-    return { capitalize: isSet(object.capitalize) ? CapitalizeRequest.fromJSON(object.capitalize) : undefined };
+    return {
+      greet: isSet(object.greet) ? GreetRequest.fromJSON(object.greet) : undefined,
+      capitalize: isSet(object.capitalize) ? CapitalizeRequest.fromJSON(object.capitalize) : undefined,
+    };
   },
 
   toJSON(message: TaskRequest): unknown {
     const obj: any = {};
+    if (message.greet !== undefined) {
+      obj.greet = GreetRequest.toJSON(message.greet);
+    }
     if (message.capitalize !== undefined) {
       obj.capitalize = CapitalizeRequest.toJSON(message.capitalize);
     }
@@ -212,6 +357,9 @@ export const TaskRequest = {
   },
   fromPartial<I extends Exact<DeepPartial<TaskRequest>, I>>(object: I): TaskRequest {
     const message = createBaseTaskRequest();
+    message.greet = (object.greet !== undefined && object.greet !== null)
+      ? GreetRequest.fromPartial(object.greet)
+      : undefined;
     message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
       ? CapitalizeRequest.fromPartial(object.capitalize)
       : undefined;
@@ -220,13 +368,16 @@ export const TaskRequest = {
 };
 
 function createBaseTaskResponse(): TaskResponse {
-  return { capitalize: undefined };
+  return { greet: undefined, capitalize: undefined };
 }
 
 export const TaskResponse = {
   encode(message: TaskResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.greet !== undefined) {
+      GreetResponse.encode(message.greet, writer.uint32(10).fork()).ldelim();
+    }
     if (message.capitalize !== undefined) {
-      CapitalizeResponse.encode(message.capitalize, writer.uint32(10).fork()).ldelim();
+      CapitalizeResponse.encode(message.capitalize, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -243,6 +394,13 @@ export const TaskResponse = {
             break;
           }
 
+          message.greet = GreetResponse.decode(reader, reader.uint32());
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.capitalize = CapitalizeResponse.decode(reader, reader.uint32());
           continue;
       }
@@ -255,11 +413,17 @@ export const TaskResponse = {
   },
 
   fromJSON(object: any): TaskResponse {
-    return { capitalize: isSet(object.capitalize) ? CapitalizeResponse.fromJSON(object.capitalize) : undefined };
+    return {
+      greet: isSet(object.greet) ? GreetResponse.fromJSON(object.greet) : undefined,
+      capitalize: isSet(object.capitalize) ? CapitalizeResponse.fromJSON(object.capitalize) : undefined,
+    };
   },
 
   toJSON(message: TaskResponse): unknown {
     const obj: any = {};
+    if (message.greet !== undefined) {
+      obj.greet = GreetResponse.toJSON(message.greet);
+    }
     if (message.capitalize !== undefined) {
       obj.capitalize = CapitalizeResponse.toJSON(message.capitalize);
     }
@@ -271,6 +435,9 @@ export const TaskResponse = {
   },
   fromPartial<I extends Exact<DeepPartial<TaskResponse>, I>>(object: I): TaskResponse {
     const message = createBaseTaskResponse();
+    message.greet = (object.greet !== undefined && object.greet !== null)
+      ? GreetResponse.fromPartial(object.greet)
+      : undefined;
     message.capitalize = (object.capitalize !== undefined && object.capitalize !== null)
       ? CapitalizeResponse.fromPartial(object.capitalize)
       : undefined;
