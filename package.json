@@ -17,7 +17,7 @@
 		"lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix; stylelint '**/*.{css,scss}' --fix",
 		"style": "prettier --write . && stylelint '**/*.{css,scss}' && npm run lint",
 		"preview": "vite preview",
-		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./ts -I ../backend tasks.proto websocket.proto && npm run add_python_imports",
+		"type": "cd proto && protoc -I . --python_betterproto_opt=pydantic_dataclasses --python_betterproto_out=./py --plugin=../node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=esModuleInterop=true --ts_proto_out=./ts -I ../backend tasks.proto websocket.proto && npm run add_python_imports",
 		"add_python_imports": "cd proto && echo 'from .tasks import *' | cat - ./py/websocket.py > temp && mv temp ./py/websocket.py && echo 'from .definitions import *' | cat - ./py/tasks.py > temp && mv temp ./py/tasks.py",
 		"test": "vitest"
 	},
