@@ -218,13 +218,14 @@ export class APIWorker extends BaseWorker {
 				);
 				this.taskQueue.handleIncrementalUpdate(
 					message.incrementalUpdate.taskId,
-					message.incrementalUpdate.update as Task<TaskType>["response"]
+					message.incrementalUpdate
+						.update as Task<TaskType>["response"],
 				);
 			} else if (message.taskResult) {
 				verbosePrint("Received task result", message.taskResult);
 				this.taskQueue.resolveTask(
 					message.taskResult.taskId,
-					message.taskResult.result as Task<TaskType>["response"]
+					message.taskResult.result as Task<TaskType>["response"],
 				);
 				this.setMessage(`Task ${message.taskResult.taskId} resolved`);
 				this.setStatus(WorkerStatus.Idle);
@@ -266,7 +267,9 @@ export class APIWorker extends BaseWorker {
 				}
 			} else if (message.fileRequest) {
 				verbosePrint("Received file request", message.fileRequest);
-				const file = await this.taskQueue.getFile(message.fileRequest.fileId);
+				const file = await this.taskQueue.getFile(
+					message.fileRequest.fileId,
+				);
 				if (file) {
 					const content = await assetEntryToBase64(file);
 					const response = wsmsg.ClientMessage.create({
