@@ -4,6 +4,7 @@
 //   protoc               v3.21.12
 // source: websocket.proto
 
+
 /* eslint-disable */
 import _m0 from "protobufjs/minimal";
 import { TaskRequest, TaskResponse } from "./tasks";

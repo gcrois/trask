@@ -4,6 +4,7 @@
 //   protoc               v3.21.12
 // source: tasks.proto
 
+
 /* eslint-disable */
 import _m0 from "protobufjs/minimal";
 import { File } from "./definitions";
