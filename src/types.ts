@@ -1,5 +1,4 @@
 import type { TaskRequest, TaskResponse } from "../proto/ts/tasks";
-//"@proto/tasks";
 
 export type TaskType = keyof TaskRequest & keyof TaskResponse;
 
