@@ -263,6 +263,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         )
                         verbose_print("Sending incremental update", incremental_update, client_id)
                         await websocket.send_bytes(bytes(incremental_update))
+                        return "success"
+                    
                     try:
                         if task_type not in loaded_tasks:
                             try:

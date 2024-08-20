@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable, Awaitable
+from typing import List, Literal, Tuple, Callable, Awaitable
 from functools import wraps
 from tasks.openai_client import client
 from tasks.task import Task
@@ -28,7 +28,7 @@ class Text2Text(Task):
         messages: List[str],
         max_tokens: int = 100,
         client = client,
-        send_update: Callable[[str], Awaitable[None]] = noop
+        send_update: Callable[[str], Awaitable[Literal['success']]] = noop
     ) -> str:
         """
         Generate text based on a given list of messages.
@@ -46,7 +46,7 @@ class Text2Text(Task):
         for role, content in zip(roles, messages):
             formatted_messages.append({"role": role, "content": content})
         
-        await send_update("Generating text")
+        print("send update!", await send_update("Generating text"))
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
