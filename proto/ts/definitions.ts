@@ -4,7 +4,6 @@
 //   protoc               v3.21.12
 // source: definitions.proto
 
-
 /* eslint-disable */
 import Long from "long";
 import _m0 from "protobufjs/minimal";

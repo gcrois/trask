@@ -74,7 +74,8 @@ message TaskResult {
 
 message IncrementalUpdate {
   string task_id = 1;
-  TaskResponse update = 2;
+  string msg = 2;
+  TaskResponse update = 3;
 }
 
 message ErrorResponse {

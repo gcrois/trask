@@ -70,6 +70,7 @@ export class WebWorkerAdapter extends BaseWorker {
 			if (event.data.type === "incrementalUpdate") {
 				this.taskQueue.handleIncrementalUpdate(
 					event.data.taskId,
+					"incremental update",
 					event.data.update,
 				);
 			}
@@ -218,6 +219,7 @@ export class APIWorker extends BaseWorker {
 				);
 				this.taskQueue.handleIncrementalUpdate(
 					message.incrementalUpdate.taskId,
+					message.incrementalUpdate.msg,
 					message.incrementalUpdate
 						.update as Task<TaskType>["response"],
 				);

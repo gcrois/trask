@@ -44,6 +44,7 @@ export interface QueuedTask<T extends TaskType = TaskType> {
 type TasksListener = (tasks: Map<string, QueuedTask>) => void;
 type TaskUpdateListener = <T extends TaskType = TaskType>(
 	taskId: string,
+	message: string,
 	update: Task<T>["response"],
 ) => void;
 
@@ -240,6 +241,7 @@ export class TaskQueue {
 
 	handleIncrementalUpdate<T extends TaskType>(
 		taskId: string,
+		message: string,
 		update: Task<T>["response"],
 	) {
 		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
@@ -264,7 +266,7 @@ export class TaskQueue {
 	emit(event: TaskQueueEvent, ...args: any[]) {
 		this.listeners[event]?.forEach((callback) => {
 			if (event === TaskQueueEvent.TaskUpdate) {
-				(callback as TaskUpdateListener)(args[0], args[1]);
+				(callback as TaskUpdateListener)(args[0], args[1], args[2]);
 			} else {
 				(callback as TasksListener)(this.tasks);
 			}

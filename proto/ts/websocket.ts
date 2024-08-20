@@ -4,7 +4,6 @@
 //   protoc               v3.21.12
 // source: websocket.proto
 
-
 /* eslint-disable */
 import _m0 from "protobufjs/minimal";
 import { TaskRequest, TaskResponse } from "./tasks";
@@ -80,6 +79,7 @@ export interface TaskResult {
 
 export interface IncrementalUpdate {
   taskId: string;
+  msg: string;
   update: TaskResponse | undefined;
 }
 
@@ -1140,7 +1140,7 @@ export const TaskResult = {
 };
 
 function createBaseIncrementalUpdate(): IncrementalUpdate {
-  return { taskId: "", update: undefined };
+  return { taskId: "", msg: "", update: undefined };
 }
 
 export const IncrementalUpdate = {
@@ -1148,8 +1148,11 @@ export const IncrementalUpdate = {
     if (message.taskId !== "") {
       writer.uint32(10).string(message.taskId);
     }
+    if (message.msg !== "") {
+      writer.uint32(18).string(message.msg);
+    }
     if (message.update !== undefined) {
-      TaskResponse.encode(message.update, writer.uint32(18).fork()).ldelim();
+      TaskResponse.encode(message.update, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -1173,6 +1176,13 @@ export const IncrementalUpdate = {
             break;
           }
 
+          message.msg = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.update = TaskResponse.decode(reader, reader.uint32());
           continue;
       }
@@ -1187,6 +1197,7 @@ export const IncrementalUpdate = {
   fromJSON(object: any): IncrementalUpdate {
     return {
       taskId: isSet(object.taskId) ? globalThis.String(object.taskId) : "",
+      msg: isSet(object.msg) ? globalThis.String(object.msg) : "",
       update: isSet(object.update) ? TaskResponse.fromJSON(object.update) : undefined,
     };
   },
@@ -1195,6 +1206,9 @@ export const IncrementalUpdate = {
     const obj: any = {};
     if (message.taskId !== "") {
       obj.taskId = message.taskId;
+    }
+    if (message.msg !== "") {
+      obj.msg = message.msg;
     }
     if (message.update !== undefined) {
       obj.update = TaskResponse.toJSON(message.update);
@@ -1208,6 +1222,7 @@ export const IncrementalUpdate = {
   fromPartial<I extends Exact<DeepPartial<IncrementalUpdate>, I>>(object: I): IncrementalUpdate {
     const message = createBaseIncrementalUpdate();
     message.taskId = object.taskId ?? "";
+    message.msg = object.msg ?? "";
     message.update = (object.update !== undefined && object.update !== null)
       ? TaskResponse.fromPartial(object.update)
       : undefined;

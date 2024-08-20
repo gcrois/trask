@@ -98,7 +98,8 @@ class TaskResult(betterproto.Message):
 @dataclass
 class IncrementalUpdate(betterproto.Message):
     task_id: str = betterproto.string_field(1)
-    update: TaskResponse = betterproto.message_field(2)
+    msg: str = betterproto.string_field(2)
+    update: TaskResponse = betterproto.message_field(3)
 
 
 @dataclass

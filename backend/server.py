@@ -252,12 +252,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     task_class = TASKS[super_pascal]
                     response_class = getattr(proto_tasks, f"{task_type}Response")
                     
-                    async def send_update(update):
+                    async def send_update(msg: str, update=None):
                         wrapped = response_class(result=update)
                         incremental_update = wsmsg.ServerMessage(
                             incremental_update=wsmsg.IncrementalUpdate(
                                 task_id=task_id,
-                                update=proto_tasks.TaskResponse(**{task_type.lower(): wrapped})
+                                msg=msg,
+                                update=update if update else proto_tasks.TaskResponse(**{task_type.lower(): wrapped})
                             )
                         )
                         verbose_print("Sending incremental update", incremental_update, client_id)

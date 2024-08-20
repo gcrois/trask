@@ -46,7 +46,7 @@ class Text2Text(Task):
         for role, content in zip(roles, messages):
             formatted_messages.append({"role": role, "content": content})
         
-        await send_update("Sending request to OpenAI")
+        await send_update("Generating text")
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",

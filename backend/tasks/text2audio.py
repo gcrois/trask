@@ -52,6 +52,8 @@ class Text2Audio(Task):
         if self.model is None:
             raise Exception("Model not loaded")
         
+        await send_update("Generating audio")
+        
         conditioning = [{
             "prompt": prompt,
             "seconds_start": 0,
