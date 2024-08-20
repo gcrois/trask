@@ -1,6 +1,7 @@
 import { FileReference, Task, TaskType } from "./types";
 import { TWorker } from "./workers";
 import { v4 as uuid } from "uuid";
+import * as wsmsg from "../proto/ts/websocket";
 
 type FileID = `file:${string}`;
 
@@ -51,6 +52,7 @@ type TaskUpdateListener = <T extends TaskType = TaskType>(
 interface FileManager {
 	addFile(blob: Blob, fileId?: FileID): Promise<FileID>;
 	getFile(id: FileID): Promise<AssetEntry | null>;
+	addAssetEntry(asset: AssetEntry): Promise<FileID>;
 }
 
 export function assetEntryToBase64(entry: AssetEntry): Promise<string> {
@@ -86,6 +88,7 @@ export class TaskQueue {
 
 	setFileManager(fileManager: FileManager) {
 		this.addFile = (blob, fileId) => fileManager.addFile(blob, fileId);
+		this.addAssetEntry = (asset) => fileManager.addAssetEntry(asset);
 		this.getFile = (id) => fileManager.getFile(id);
 	}
 
@@ -95,6 +98,10 @@ export class TaskQueue {
 
 	getFile(_id: FileID): Promise<AssetEntry | null> {
 		throw new Error("Needs fileManager to get files!");
+	}
+
+	addAssetEntry(_asset: AssetEntry): Promise<FileID> {
+		throw new Error("Needs fileManager to add asset entries!");
 	}
 
 	addWorker(worker: TWorker): void {
@@ -117,7 +124,7 @@ export class TaskQueue {
 	): Promise<Task<T>["response"] | undefined> {
 		const queuedTask = this.tasks.get(id);
 		return queuedTask
-			? queuedTask.externalPromise!
+			? (queuedTask.externalPromise! as Promise<Task<T>["response"]>)
 			: Promise.reject("Task not found");
 	}
 
@@ -134,7 +141,8 @@ export class TaskQueue {
 			rejectExternal = reject;
 		}) as Promise<Task<T>["response"]>;
 
-		const promise = new Promise((resolve, reject) => {
+		const promise = new Promise((_resolve, reject) => {
+			const resolve = _resolve as (value: Task<T>["response"]) => void;
 			this.tasks.set(id, {
 				id,
 				timestamp,
@@ -244,7 +252,7 @@ export class TaskQueue {
 		message: string,
 		update: Task<T>["response"],
 	) {
-		this.emit(TaskQueueEvent.TaskUpdate, taskId, update);
+		this.emit(TaskQueueEvent.TaskUpdate, taskId, update, message);
 	}
 
 	on(event: TaskQueueEvent, callback: TasksListener | TaskUpdateListener) {

@@ -31,12 +31,12 @@ class File2Text(Task):
         send_update: Callable[[str], Awaitable[None]] = noop
     ) -> str:
         print(f"File2Text: {file}")
+        
         # open file at path
         with open(file.file_path, 'r') as f:
             text = f.read()
         return text
-        
-        return "hi!"
+
         # """
         # Generate text based on a given list of messages.
         # :param max_tokens: Maximum number of tokens in the response

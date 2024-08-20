@@ -1,3 +1,5 @@
+import mimetypes
+import traceback
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import sys
@@ -9,6 +11,7 @@ from datetime import datetime
 import atexit
 import importlib
 import betterproto
+import uuid
 
 from time import sleep
 
@@ -229,10 +232,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         file_response = await websocket.receive_bytes()
                         # parse file response
                         parsed_response = wsmsg.ClientMessage().parse(file_response)
-                        print("PARSED RESPONSE", parsed_response)
                         # get file content
                         slim = parsed_response.file_response.content
-                        print("FILE CONTENT", slim)
                         # save base64 string to file
                         file_path = os.path.join(file_dir, file_id.split(':')[-1])
                         base64_to_file(slim, file_path)
@@ -264,7 +265,30 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         verbose_print("Sending incremental update", incremental_update, client_id)
                         await websocket.send_bytes(bytes(incremental_update))
                         return "success"
-                    
+
+                    # async def file_send(file: File):
+                    #     available_files[file.id] = file
+                        
+                    #     # Determine the MIME type
+                    #     mime_type, _ = mimetypes.guess_type(file_path)
+                    #     if mime_type is None:
+                    #         mime_type = 'application/octet-stream'  # Default to binary if type can't be guessed
+                        
+                    #     with open(file_path, "rb") as f:
+                    #         file_content = base64.b64encode(f.read()).decode("utf-8")
+                        
+                    #     # Construct the data URL
+                    #     data_url = f"data:{mime_type};base64,{file_content}"
+                        
+                    #     file_send_message = wsmsg.ServerMessage(
+                    #         file_send=wsmsg.FileSend(
+                    #             file_id=file_id,
+                    #             content=data_url
+                    #         )
+                    #     )
+                    #     await websocket.send_bytes(bytes(file_send_message))
+                    #     return file_id
+                                        
                     try:
                         if task_type not in loaded_tasks:
                             try:
@@ -281,7 +305,28 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             loaded_tasks.add(task_type)
                     
                         result = await task_class.execute(**task_data[task_type.lower()], send_update=send_update)
+                        
+                        # recursively convert File objects to proto
+                        async def convert_to_proto(obj):
+                            if isinstance(obj, File):
+                                await obj.send(websocket)
+                                return obj.to_proto()
+                            elif isinstance(obj, dict):
+                                return {k: convert_to_proto(v) for k, v in obj.items()}
+                            elif isinstance(obj, list):
+                                return [convert_to_proto(v) for v in obj]
+                            elif isinstance(obj, tuple):
+                                return tuple(convert_to_proto(v) for v in obj)
+                            else:
+                                return obj
+                            
+                        result = await convert_to_proto(result)
+                        
+                        print("RESULT", result)
                         task_response = response_class(result=result)
+                        task_response_dict = task_response.to_dict()
+                        print("TASK RESPONSE", task_response_dict)
+                        
                         response = wsmsg.ServerMessage(
                             task_result=wsmsg.TaskResult(
                                 task_id=task_id,
@@ -293,15 +338,17 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         request_log['response'] = response.to_dict()
 
                     except Exception as e:
+                        error_traceback = traceback.format_exc()
                         error_response = wsmsg.ServerMessage(
                             error=wsmsg.ErrorResponse(
                                 task_id=task_id,
-                                error=str(e)
+                                error=f"Error: {str(e)}\n\nTraceback:\n{error_traceback}"
                             )
                         )
                         verbose_print("Sending error response", error_response, client_id)
                         await websocket.send_bytes(bytes(error_response))
                         request_log['response'] = error_response.to_dict()
+                        request_log['error_traceback'] = error_traceback
                 else:
                     error_response = wsmsg.ServerMessage(
                         error=wsmsg.ErrorResponse(
@@ -346,12 +393,15 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Run the FastAPI server with specified tasks.")
     parser.add_argument('tasks', nargs='*', help='List of task names to load (optional, loads all tasks if not specified)')
+    parser.add_argument('--port', type=int, help='Port to run the server on (default: 8000)')
     args = parser.parse_args()
 
     if args.tasks:
         load_tasks(args.tasks)
     else:
         load_tasks() # Load all tasks
+        
+    port = args.port if args.port else 8000
     
     cert_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'cert.pem')
     key_path = os.path.join(os.path.dirname(__file__), '..', 'certs', 'key.pem')
@@ -360,10 +410,10 @@ if __name__ == "__main__":
         uvicorn.run(
             app,
             host="0.0.0.0",
-            port=8000,
+            port=port,
             ssl_keyfile=key_path,
             ssl_certfile=cert_path
         )
     else:
         print("SSL certificate and key not found. Running server without SSL.")
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        uvicorn.run(app, host="0.0.0.0", port=port)

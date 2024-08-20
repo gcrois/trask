@@ -1,4 +1,5 @@
 import {
+	AssetEntry,
 	assetEntryToBase64,
 	base64ToBlob,
 	QueuedTask,
@@ -217,11 +218,15 @@ export class APIWorker extends BaseWorker {
 					"Received incremental update",
 					message.incrementalUpdate,
 				);
+				const task = this.taskQueue.getTask(
+					message.incrementalUpdate.taskId,
+				);
 				this.taskQueue.handleIncrementalUpdate(
 					message.incrementalUpdate.taskId,
 					message.incrementalUpdate.msg,
-					message.incrementalUpdate
-						.update as Task<TaskType>["response"],
+					message.incrementalUpdate.update![
+						task?.task.name || "text2text"
+					],
 				);
 			} else if (message.taskResult) {
 				verbosePrint("Received task result", message.taskResult);
@@ -287,7 +292,13 @@ export class APIWorker extends BaseWorker {
 				verbosePrint("Received file send", message.fileSend);
 				const { fileId, content } = message.fileSend;
 				const blob = base64ToBlob(content);
-				this.taskQueue.addFile(blob, fileId);
+				// this.taskQueue.addFile(blob, fileId);
+				this.taskQueue.addAssetEntry({
+					id: fileId as AssetEntry["id"],
+					file: blob,
+					size: blob.size,
+					hash: "hash",
+				})
 			} else if (message.requestAvailableTasks) {
 				verbosePrint(
 					"Received request for available tasks",
