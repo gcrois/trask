@@ -57,8 +57,8 @@ export interface Text2textResponse {
  * send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
  */
 export interface Image2captionRequest {
-  imageFile: File | undefined;
-  maxTokens: number;
+  image: File | undefined;
+  tokens: number;
 }
 
 export interface Image2captionResponse {
@@ -537,16 +537,16 @@ export const Text2textResponse = {
 };
 
 function createBaseImage2captionRequest(): Image2captionRequest {
-  return { imageFile: undefined, maxTokens: 0 };
+  return { image: undefined, tokens: 0 };
 }
 
 export const Image2captionRequest = {
   encode(message: Image2captionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.imageFile !== undefined) {
-      File.encode(message.imageFile, writer.uint32(10).fork()).ldelim();
+    if (message.image !== undefined) {
+      File.encode(message.image, writer.uint32(10).fork()).ldelim();
     }
-    if (message.maxTokens !== 0) {
-      writer.uint32(16).int32(message.maxTokens);
+    if (message.tokens !== 0) {
+      writer.uint32(16).int32(message.tokens);
     }
     return writer;
   },
@@ -563,14 +563,14 @@ export const Image2captionRequest = {
             break;
           }
 
-          message.imageFile = File.decode(reader, reader.uint32());
+          message.image = File.decode(reader, reader.uint32());
           continue;
         case 2:
           if (tag !== 16) {
             break;
           }
 
-          message.maxTokens = reader.int32();
+          message.tokens = reader.int32();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -583,18 +583,18 @@ export const Image2captionRequest = {
 
   fromJSON(object: any): Image2captionRequest {
     return {
-      imageFile: isSet(object.imageFile) ? File.fromJSON(object.imageFile) : undefined,
-      maxTokens: isSet(object.maxTokens) ? globalThis.Number(object.maxTokens) : 0,
+      image: isSet(object.image) ? File.fromJSON(object.image) : undefined,
+      tokens: isSet(object.tokens) ? globalThis.Number(object.tokens) : 0,
     };
   },
 
   toJSON(message: Image2captionRequest): unknown {
     const obj: any = {};
-    if (message.imageFile !== undefined) {
-      obj.imageFile = File.toJSON(message.imageFile);
+    if (message.image !== undefined) {
+      obj.image = File.toJSON(message.image);
     }
-    if (message.maxTokens !== 0) {
-      obj.maxTokens = Math.round(message.maxTokens);
+    if (message.tokens !== 0) {
+      obj.tokens = Math.round(message.tokens);
     }
     return obj;
   },
@@ -604,10 +604,8 @@ export const Image2captionRequest = {
   },
   fromPartial<I extends Exact<DeepPartial<Image2captionRequest>, I>>(object: I): Image2captionRequest {
     const message = createBaseImage2captionRequest();
-    message.imageFile = (object.imageFile !== undefined && object.imageFile !== null)
-      ? File.fromPartial(object.imageFile)
-      : undefined;
-    message.maxTokens = object.maxTokens ?? 0;
+    message.image = (object.image !== undefined && object.image !== null) ? File.fromPartial(object.image) : undefined;
+    message.tokens = object.tokens ?? 0;
     return message;
   },
 };

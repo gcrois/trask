@@ -44,8 +44,8 @@ class Text2textResponse(betterproto.Message):
 
 @dataclass
 class Image2captionRequest(betterproto.Message):
-    image_file: "File" = betterproto.message_field(1)
-    max_tokens: int = betterproto.int32_field(2)
+    image: "File" = betterproto.message_field(1)
+    tokens: int = betterproto.int32_field(2)
 
 
 @dataclass
