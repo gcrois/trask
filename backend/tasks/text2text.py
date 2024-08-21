@@ -26,7 +26,7 @@ class Text2Text(Task):
     async def execute(cls,
         roles: List[str],
         messages: List[str],
-        max_tokens: int = 100,
+        max_tokens: int = 300,
         client = client,
         send_update: Callable[[str], Awaitable[Literal['success']]] = noop
     ) -> str:

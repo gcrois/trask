@@ -40,14 +40,29 @@ message Text2textResponse {
   string result = 1;
 }
 
+message Image2captionRequest {
+  // Ignored parameters:
+  // client: <class 'inspect._empty'>
+  // send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
+
+  File imageFile = 1;
+  int32 maxTokens = 2;
+}
+
+message Image2captionResponse {
+  string result = 1;
+}
+
 message Text2audioRequest {
   // Ignored parameters:
   // send_update: typing.Any
 
   string prompt = 1;
-  int32 duration = 2;
-  int32 steps = 3;
-  float cfgScale = 4;
+  string negativePrompt = 2;
+  float duration = 3;
+  int32 numInferenceSteps = 4;
+  int32 numWaveforms = 5;
+  int32 seed = 6;
 }
 
 message Text2audioResponse {
@@ -83,9 +98,10 @@ message TaskRequest {
     Text2imageRequest text2image = 1;
     CapitalizeRequest capitalize = 2;
     Text2textRequest text2text = 3;
-    Text2audioRequest text2audio = 4;
-    File2textRequest file2text = 5;
-    Text2imagefileRequest text2imagefile = 6;
+    Image2captionRequest image2caption = 4;
+    Text2audioRequest text2audio = 5;
+    File2textRequest file2text = 6;
+    Text2imagefileRequest text2imagefile = 7;
   }
 }
 
@@ -94,8 +110,9 @@ message TaskResponse {
     Text2imageResponse text2image = 1;
     CapitalizeResponse capitalize = 2;
     Text2textResponse text2text = 3;
-    Text2audioResponse text2audio = 4;
-    File2textResponse file2text = 5;
-    Text2imagefileResponse text2imagefile = 6;
+    Image2captionResponse image2caption = 4;
+    Text2audioResponse text2audio = 5;
+    File2textResponse file2text = 6;
+    Text2imagefileResponse text2imagefile = 7;
   }
 }

@@ -53,13 +53,29 @@ export interface Text2textResponse {
 
 /**
  * Ignored parameters:
+ * client: <class 'inspect._empty'>
+ * send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
+ */
+export interface Image2captionRequest {
+  imageFile: File | undefined;
+  maxTokens: number;
+}
+
+export interface Image2captionResponse {
+  result: string;
+}
+
+/**
+ * Ignored parameters:
  * send_update: typing.Any
  */
 export interface Text2audioRequest {
   prompt: string;
+  negativePrompt: string;
   duration: number;
-  steps: number;
-  cfgScale: number;
+  numInferenceSteps: number;
+  numWaveforms: number;
+  seed: number;
 }
 
 export interface Text2audioResponse {
@@ -96,6 +112,7 @@ export interface TaskRequest {
   text2image?: Text2imageRequest | undefined;
   capitalize?: CapitalizeRequest | undefined;
   text2text?: Text2textRequest | undefined;
+  image2caption?: Image2captionRequest | undefined;
   text2audio?: Text2audioRequest | undefined;
   file2text?: File2textRequest | undefined;
   text2imagefile?: Text2imagefileRequest | undefined;
@@ -105,6 +122,7 @@ export interface TaskResponse {
   text2image?: Text2imageResponse | undefined;
   capitalize?: CapitalizeResponse | undefined;
   text2text?: Text2textResponse | undefined;
+  image2caption?: Image2captionResponse | undefined;
   text2audio?: Text2audioResponse | undefined;
   file2text?: File2textResponse | undefined;
   text2imagefile?: Text2imagefileResponse | undefined;
@@ -518,8 +536,141 @@ export const Text2textResponse = {
   },
 };
 
+function createBaseImage2captionRequest(): Image2captionRequest {
+  return { imageFile: undefined, maxTokens: 0 };
+}
+
+export const Image2captionRequest = {
+  encode(message: Image2captionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.imageFile !== undefined) {
+      File.encode(message.imageFile, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.maxTokens !== 0) {
+      writer.uint32(16).int32(message.maxTokens);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Image2captionRequest {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImage2captionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.imageFile = File.decode(reader, reader.uint32());
+          continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+
+          message.maxTokens = reader.int32();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Image2captionRequest {
+    return {
+      imageFile: isSet(object.imageFile) ? File.fromJSON(object.imageFile) : undefined,
+      maxTokens: isSet(object.maxTokens) ? globalThis.Number(object.maxTokens) : 0,
+    };
+  },
+
+  toJSON(message: Image2captionRequest): unknown {
+    const obj: any = {};
+    if (message.imageFile !== undefined) {
+      obj.imageFile = File.toJSON(message.imageFile);
+    }
+    if (message.maxTokens !== 0) {
+      obj.maxTokens = Math.round(message.maxTokens);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Image2captionRequest>, I>>(base?: I): Image2captionRequest {
+    return Image2captionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Image2captionRequest>, I>>(object: I): Image2captionRequest {
+    const message = createBaseImage2captionRequest();
+    message.imageFile = (object.imageFile !== undefined && object.imageFile !== null)
+      ? File.fromPartial(object.imageFile)
+      : undefined;
+    message.maxTokens = object.maxTokens ?? 0;
+    return message;
+  },
+};
+
+function createBaseImage2captionResponse(): Image2captionResponse {
+  return { result: "" };
+}
+
+export const Image2captionResponse = {
+  encode(message: Image2captionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.result !== "") {
+      writer.uint32(10).string(message.result);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Image2captionResponse {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImage2captionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.result = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Image2captionResponse {
+    return { result: isSet(object.result) ? globalThis.String(object.result) : "" };
+  },
+
+  toJSON(message: Image2captionResponse): unknown {
+    const obj: any = {};
+    if (message.result !== "") {
+      obj.result = message.result;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Image2captionResponse>, I>>(base?: I): Image2captionResponse {
+    return Image2captionResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Image2captionResponse>, I>>(object: I): Image2captionResponse {
+    const message = createBaseImage2captionResponse();
+    message.result = object.result ?? "";
+    return message;
+  },
+};
+
 function createBaseText2audioRequest(): Text2audioRequest {
-  return { prompt: "", duration: 0, steps: 0, cfgScale: 0 };
+  return { prompt: "", negativePrompt: "", duration: 0, numInferenceSteps: 0, numWaveforms: 0, seed: 0 };
 }
 
 export const Text2audioRequest = {
@@ -527,14 +678,20 @@ export const Text2audioRequest = {
     if (message.prompt !== "") {
       writer.uint32(10).string(message.prompt);
     }
+    if (message.negativePrompt !== "") {
+      writer.uint32(18).string(message.negativePrompt);
+    }
     if (message.duration !== 0) {
-      writer.uint32(16).int32(message.duration);
+      writer.uint32(29).float(message.duration);
     }
-    if (message.steps !== 0) {
-      writer.uint32(24).int32(message.steps);
+    if (message.numInferenceSteps !== 0) {
+      writer.uint32(32).int32(message.numInferenceSteps);
     }
-    if (message.cfgScale !== 0) {
-      writer.uint32(37).float(message.cfgScale);
+    if (message.numWaveforms !== 0) {
+      writer.uint32(40).int32(message.numWaveforms);
+    }
+    if (message.seed !== 0) {
+      writer.uint32(48).int32(message.seed);
     }
     return writer;
   },
@@ -554,25 +711,39 @@ export const Text2audioRequest = {
           message.prompt = reader.string();
           continue;
         case 2:
-          if (tag !== 16) {
+          if (tag !== 18) {
             break;
           }
 
-          message.duration = reader.int32();
+          message.negativePrompt = reader.string();
           continue;
         case 3:
-          if (tag !== 24) {
+          if (tag !== 29) {
             break;
           }
 
-          message.steps = reader.int32();
+          message.duration = reader.float();
           continue;
         case 4:
-          if (tag !== 37) {
+          if (tag !== 32) {
             break;
           }
 
-          message.cfgScale = reader.float();
+          message.numInferenceSteps = reader.int32();
+          continue;
+        case 5:
+          if (tag !== 40) {
+            break;
+          }
+
+          message.numWaveforms = reader.int32();
+          continue;
+        case 6:
+          if (tag !== 48) {
+            break;
+          }
+
+          message.seed = reader.int32();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -586,9 +757,11 @@ export const Text2audioRequest = {
   fromJSON(object: any): Text2audioRequest {
     return {
       prompt: isSet(object.prompt) ? globalThis.String(object.prompt) : "",
+      negativePrompt: isSet(object.negativePrompt) ? globalThis.String(object.negativePrompt) : "",
       duration: isSet(object.duration) ? globalThis.Number(object.duration) : 0,
-      steps: isSet(object.steps) ? globalThis.Number(object.steps) : 0,
-      cfgScale: isSet(object.cfgScale) ? globalThis.Number(object.cfgScale) : 0,
+      numInferenceSteps: isSet(object.numInferenceSteps) ? globalThis.Number(object.numInferenceSteps) : 0,
+      numWaveforms: isSet(object.numWaveforms) ? globalThis.Number(object.numWaveforms) : 0,
+      seed: isSet(object.seed) ? globalThis.Number(object.seed) : 0,
     };
   },
 
@@ -597,14 +770,20 @@ export const Text2audioRequest = {
     if (message.prompt !== "") {
       obj.prompt = message.prompt;
     }
+    if (message.negativePrompt !== "") {
+      obj.negativePrompt = message.negativePrompt;
+    }
     if (message.duration !== 0) {
-      obj.duration = Math.round(message.duration);
+      obj.duration = message.duration;
     }
-    if (message.steps !== 0) {
-      obj.steps = Math.round(message.steps);
+    if (message.numInferenceSteps !== 0) {
+      obj.numInferenceSteps = Math.round(message.numInferenceSteps);
     }
-    if (message.cfgScale !== 0) {
-      obj.cfgScale = message.cfgScale;
+    if (message.numWaveforms !== 0) {
+      obj.numWaveforms = Math.round(message.numWaveforms);
+    }
+    if (message.seed !== 0) {
+      obj.seed = Math.round(message.seed);
     }
     return obj;
   },
@@ -615,9 +794,11 @@ export const Text2audioRequest = {
   fromPartial<I extends Exact<DeepPartial<Text2audioRequest>, I>>(object: I): Text2audioRequest {
     const message = createBaseText2audioRequest();
     message.prompt = object.prompt ?? "";
+    message.negativePrompt = object.negativePrompt ?? "";
     message.duration = object.duration ?? 0;
-    message.steps = object.steps ?? 0;
-    message.cfgScale = object.cfgScale ?? 0;
+    message.numInferenceSteps = object.numInferenceSteps ?? 0;
+    message.numWaveforms = object.numWaveforms ?? 0;
+    message.seed = object.seed ?? 0;
     return message;
   },
 };
@@ -933,6 +1114,7 @@ function createBaseTaskRequest(): TaskRequest {
     text2image: undefined,
     capitalize: undefined,
     text2text: undefined,
+    image2caption: undefined,
     text2audio: undefined,
     file2text: undefined,
     text2imagefile: undefined,
@@ -950,14 +1132,17 @@ export const TaskRequest = {
     if (message.text2text !== undefined) {
       Text2textRequest.encode(message.text2text, writer.uint32(26).fork()).ldelim();
     }
+    if (message.image2caption !== undefined) {
+      Image2captionRequest.encode(message.image2caption, writer.uint32(34).fork()).ldelim();
+    }
     if (message.text2audio !== undefined) {
-      Text2audioRequest.encode(message.text2audio, writer.uint32(34).fork()).ldelim();
+      Text2audioRequest.encode(message.text2audio, writer.uint32(42).fork()).ldelim();
     }
     if (message.file2text !== undefined) {
-      File2textRequest.encode(message.file2text, writer.uint32(42).fork()).ldelim();
+      File2textRequest.encode(message.file2text, writer.uint32(50).fork()).ldelim();
     }
     if (message.text2imagefile !== undefined) {
-      Text2imagefileRequest.encode(message.text2imagefile, writer.uint32(50).fork()).ldelim();
+      Text2imagefileRequest.encode(message.text2imagefile, writer.uint32(58).fork()).ldelim();
     }
     return writer;
   },
@@ -995,17 +1180,24 @@ export const TaskRequest = {
             break;
           }
 
-          message.text2audio = Text2audioRequest.decode(reader, reader.uint32());
+          message.image2caption = Image2captionRequest.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
             break;
           }
 
-          message.file2text = File2textRequest.decode(reader, reader.uint32());
+          message.text2audio = Text2audioRequest.decode(reader, reader.uint32());
           continue;
         case 6:
           if (tag !== 50) {
+            break;
+          }
+
+          message.file2text = File2textRequest.decode(reader, reader.uint32());
+          continue;
+        case 7:
+          if (tag !== 58) {
             break;
           }
 
@@ -1025,6 +1217,7 @@ export const TaskRequest = {
       text2image: isSet(object.text2image) ? Text2imageRequest.fromJSON(object.text2image) : undefined,
       capitalize: isSet(object.capitalize) ? CapitalizeRequest.fromJSON(object.capitalize) : undefined,
       text2text: isSet(object.text2text) ? Text2textRequest.fromJSON(object.text2text) : undefined,
+      image2caption: isSet(object.image2caption) ? Image2captionRequest.fromJSON(object.image2caption) : undefined,
       text2audio: isSet(object.text2audio) ? Text2audioRequest.fromJSON(object.text2audio) : undefined,
       file2text: isSet(object.file2text) ? File2textRequest.fromJSON(object.file2text) : undefined,
       text2imagefile: isSet(object.text2imagefile) ? Text2imagefileRequest.fromJSON(object.text2imagefile) : undefined,
@@ -1041,6 +1234,9 @@ export const TaskRequest = {
     }
     if (message.text2text !== undefined) {
       obj.text2text = Text2textRequest.toJSON(message.text2text);
+    }
+    if (message.image2caption !== undefined) {
+      obj.image2caption = Image2captionRequest.toJSON(message.image2caption);
     }
     if (message.text2audio !== undefined) {
       obj.text2audio = Text2audioRequest.toJSON(message.text2audio);
@@ -1068,6 +1264,9 @@ export const TaskRequest = {
     message.text2text = (object.text2text !== undefined && object.text2text !== null)
       ? Text2textRequest.fromPartial(object.text2text)
       : undefined;
+    message.image2caption = (object.image2caption !== undefined && object.image2caption !== null)
+      ? Image2captionRequest.fromPartial(object.image2caption)
+      : undefined;
     message.text2audio = (object.text2audio !== undefined && object.text2audio !== null)
       ? Text2audioRequest.fromPartial(object.text2audio)
       : undefined;
@@ -1086,6 +1285,7 @@ function createBaseTaskResponse(): TaskResponse {
     text2image: undefined,
     capitalize: undefined,
     text2text: undefined,
+    image2caption: undefined,
     text2audio: undefined,
     file2text: undefined,
     text2imagefile: undefined,
@@ -1103,14 +1303,17 @@ export const TaskResponse = {
     if (message.text2text !== undefined) {
       Text2textResponse.encode(message.text2text, writer.uint32(26).fork()).ldelim();
     }
+    if (message.image2caption !== undefined) {
+      Image2captionResponse.encode(message.image2caption, writer.uint32(34).fork()).ldelim();
+    }
     if (message.text2audio !== undefined) {
-      Text2audioResponse.encode(message.text2audio, writer.uint32(34).fork()).ldelim();
+      Text2audioResponse.encode(message.text2audio, writer.uint32(42).fork()).ldelim();
     }
     if (message.file2text !== undefined) {
-      File2textResponse.encode(message.file2text, writer.uint32(42).fork()).ldelim();
+      File2textResponse.encode(message.file2text, writer.uint32(50).fork()).ldelim();
     }
     if (message.text2imagefile !== undefined) {
-      Text2imagefileResponse.encode(message.text2imagefile, writer.uint32(50).fork()).ldelim();
+      Text2imagefileResponse.encode(message.text2imagefile, writer.uint32(58).fork()).ldelim();
     }
     return writer;
   },
@@ -1148,17 +1351,24 @@ export const TaskResponse = {
             break;
           }
 
-          message.text2audio = Text2audioResponse.decode(reader, reader.uint32());
+          message.image2caption = Image2captionResponse.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
             break;
           }
 
-          message.file2text = File2textResponse.decode(reader, reader.uint32());
+          message.text2audio = Text2audioResponse.decode(reader, reader.uint32());
           continue;
         case 6:
           if (tag !== 50) {
+            break;
+          }
+
+          message.file2text = File2textResponse.decode(reader, reader.uint32());
+          continue;
+        case 7:
+          if (tag !== 58) {
             break;
           }
 
@@ -1178,6 +1388,7 @@ export const TaskResponse = {
       text2image: isSet(object.text2image) ? Text2imageResponse.fromJSON(object.text2image) : undefined,
       capitalize: isSet(object.capitalize) ? CapitalizeResponse.fromJSON(object.capitalize) : undefined,
       text2text: isSet(object.text2text) ? Text2textResponse.fromJSON(object.text2text) : undefined,
+      image2caption: isSet(object.image2caption) ? Image2captionResponse.fromJSON(object.image2caption) : undefined,
       text2audio: isSet(object.text2audio) ? Text2audioResponse.fromJSON(object.text2audio) : undefined,
       file2text: isSet(object.file2text) ? File2textResponse.fromJSON(object.file2text) : undefined,
       text2imagefile: isSet(object.text2imagefile) ? Text2imagefileResponse.fromJSON(object.text2imagefile) : undefined,
@@ -1194,6 +1405,9 @@ export const TaskResponse = {
     }
     if (message.text2text !== undefined) {
       obj.text2text = Text2textResponse.toJSON(message.text2text);
+    }
+    if (message.image2caption !== undefined) {
+      obj.image2caption = Image2captionResponse.toJSON(message.image2caption);
     }
     if (message.text2audio !== undefined) {
       obj.text2audio = Text2audioResponse.toJSON(message.text2audio);
@@ -1220,6 +1434,9 @@ export const TaskResponse = {
       : undefined;
     message.text2text = (object.text2text !== undefined && object.text2text !== null)
       ? Text2textResponse.fromPartial(object.text2text)
+      : undefined;
+    message.image2caption = (object.image2caption !== undefined && object.image2caption !== null)
+      ? Image2captionResponse.fromPartial(object.image2caption)
       : undefined;
     message.text2audio = (object.text2audio !== undefined && object.text2audio !== null)
       ? Text2audioResponse.fromPartial(object.text2audio)

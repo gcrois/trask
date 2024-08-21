@@ -49,7 +49,8 @@ class Text2Image(Task):
             #     send_update(f"Step {step}/{steps}")
 
         width, height = map(int, size.split("x"))
-
+        
+        generator = torch.Generator("cuda" if torch.cuda.is_available() else "cpu")
         image = self.pipe(
             prompt,
             guidance_scale=2.0,
@@ -57,7 +58,7 @@ class Text2Image(Task):
             max_sequence_length=256,
             height=height,
             width=width,
-            generator=torch.Generator("cpu").manual_seed(seed),
+            generator=generator.manual_seed(seed),
             # callback_on_step_end=callback
         ).images[0]
 

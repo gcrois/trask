@@ -54,8 +54,8 @@ class Text2Audio(Task):
         #     await send_update("Generating audio...")
 
         generator = torch.Generator("cuda" if torch.cuda.is_available() else "cpu")
-        if seed is not None:
-            generator = generator.manual_seed(seed)
+        if seed == 0:
+            seed = randint(0, 2**32 - 1)
 
         audio = self.pipe(
             prompt,
@@ -63,7 +63,7 @@ class Text2Audio(Task):
             num_inference_steps=num_inference_steps,
             audio_end_in_s=duration,
             num_waveforms_per_prompt=num_waveforms,
-            generator=generator,
+            generator=generator.manual_seed(seed)
         ).audios
 
         output = audio[0].T.float().cpu().numpy()

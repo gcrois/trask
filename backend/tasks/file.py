@@ -5,6 +5,7 @@ import base64
 import mimetypes
 from typing import Optional, IO, Any
 from contextlib import contextmanager
+from fastapi import WebSocket
 
 import betterproto
 
@@ -74,8 +75,12 @@ class File:
     @property
     def path(self):
         return self.file_path
+    
+    def to_base64(self):
+        with self.open('rb') as f:
+            return base64.b64encode(f.read()).decode("utf-8")
 
-    async def send(self, websocket):
+    async def send(self, websocket: WebSocket):
         # Determine the MIME type
         mime_type, _ = mimetypes.guess_type(self.file_path)
         if mime_type is None:
@@ -94,15 +99,18 @@ class File:
                 content=data_url
             )
         )
+        print("Sending file:", self.filename)
         await websocket.send_bytes(bytes(file_send_message))
         
         # wait for the client to acknowledge the file
+        print("Waiting for client to acknowledge file")
         data = await websocket.receive_bytes()
+        print("Got response, parsing!")
         message = wsmsg.ClientMessage().parse(data)
         message_type, message_content = betterproto.which_one_of(message, "message")
         
         if message_type == "file_receive":
-            if message_content.file_receive.file_id == self.id:
+            if message_content.file_id == self.id:
                 return self.id
 
             raise Exception(f"Unexpected file id in file_receive message: {message_content.file_receive.file_id}, expected {self.id}")
