@@ -305,6 +305,7 @@ export class APIWorker extends BaseWorker {
 					fileReceive: { fileId },
 				});
 				console.log("Sending file received response", response);
+				this.ws.send(wsmsg.ClientMessage.encode(response).finish());
 			} else if (message.requestAvailableTasks) {
 				verbosePrint(
 					"Received request for available tasks",
