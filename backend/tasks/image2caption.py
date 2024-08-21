@@ -38,11 +38,7 @@ class Image2Caption(Task):
         :param send_update: Function to send incremental updates (excluded from protobuf)
         :return: Generated caption for the image
         """
-        print(f"Image2Caption: Processing {image_file.filename}")
-
-        # Read the image file and encode it to base64
-        with open(image_file.file_path, "rb") as image_file:
-            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+        print(f"Image2Caption: Processing {image.filename}")
 
         await send_update("Generating caption for the image")
 
@@ -52,17 +48,17 @@ class Image2Caption(Task):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Please provide a caption for this image."},
+                        {"type": "text", "text": "Provide a detailed caption for this image."},
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
+                                "url": f"data:image/jpeg;base64,{image.to_base64()}"
                             }
                         }
                     ]
                 }
             ],
-            max_tokens=max_tokens
+            max_tokens=tokens
         )
 
         if not response.choices[0].message.content:
