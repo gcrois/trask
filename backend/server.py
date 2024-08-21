@@ -265,30 +265,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         verbose_print("Sending incremental update", incremental_update, client_id)
                         await websocket.send_bytes(bytes(incremental_update))
                         return "success"
-
-                    # async def file_send(file: File):
-                    #     available_files[file.id] = file
-                        
-                    #     # Determine the MIME type
-                    #     mime_type, _ = mimetypes.guess_type(file_path)
-                    #     if mime_type is None:
-                    #         mime_type = 'application/octet-stream'  # Default to binary if type can't be guessed
-                        
-                    #     with open(file_path, "rb") as f:
-                    #         file_content = base64.b64encode(f.read()).decode("utf-8")
-                        
-                    #     # Construct the data URL
-                    #     data_url = f"data:{mime_type};base64,{file_content}"
-                        
-                    #     file_send_message = wsmsg.ServerMessage(
-                    #         file_send=wsmsg.FileSend(
-                    #             file_id=file_id,
-                    #             content=data_url
-                    #         )
-                    #     )
-                    #     await websocket.send_bytes(bytes(file_send_message))
-                    #     return file_id
-                                        
                     try:
                         if task_type not in loaded_tasks:
                             try:
@@ -322,8 +298,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             
                         result = await convert_to_proto(result)
                         
-                        print("RESULT", result)
                         task_response = response_class(result=result)
+                        
                         task_response_dict = task_response.to_dict()
                         print("TASK RESPONSE", task_response_dict)
                         
@@ -394,12 +370,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the FastAPI server with specified tasks.")
     parser.add_argument('tasks', nargs='*', help='List of task names to load (optional, loads all tasks if not specified)')
     parser.add_argument('--port', type=int, help='Port to run the server on (default: 8000)')
+    # bool option to try to preload all tasks
+    parser.add_argument('--preload', action='store_true', help='Preload all tasks')
     args = parser.parse_args()
 
     if args.tasks:
         load_tasks(args.tasks)
     else:
         load_tasks() # Load all tasks
+        
+    if args.preload:
+        for task_name, task_class in TASKS.items():
+            task_class.load()
+            loaded_tasks.add(task_name)
         
     port = args.port if args.port else 8000
     

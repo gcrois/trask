@@ -12,8 +12,15 @@ export const protobufPackage = "websocket";
 
 export interface ClientMessage {
   availableTasks?: AvailableTasks | undefined;
-  execute?: ExecuteTask | undefined;
-  fileResponse?: FileResponse | undefined;
+  execute?:
+    | ExecuteTask
+    | undefined;
+  /** server sends this (includes a file) after client requests a file */
+  fileResponse?:
+    | FileResponse
+    | undefined;
+  /** client sends this after saving one of the server's files */
+  fileReceive?: FileReceive | undefined;
   pause?: Pause | undefined;
   resume?: Resume | undefined;
   handshake?: ClientHandshake | undefined;
@@ -92,6 +99,10 @@ export interface FileRequest {
   fileId: string;
 }
 
+export interface FileReceive {
+  fileId: string;
+}
+
 export interface FileResponse {
   fileId: string;
   /** base64 encoded file content */
@@ -109,6 +120,7 @@ function createBaseClientMessage(): ClientMessage {
     availableTasks: undefined,
     execute: undefined,
     fileResponse: undefined,
+    fileReceive: undefined,
     pause: undefined,
     resume: undefined,
     handshake: undefined,
@@ -126,14 +138,17 @@ export const ClientMessage = {
     if (message.fileResponse !== undefined) {
       FileResponse.encode(message.fileResponse, writer.uint32(26).fork()).ldelim();
     }
+    if (message.fileReceive !== undefined) {
+      FileReceive.encode(message.fileReceive, writer.uint32(34).fork()).ldelim();
+    }
     if (message.pause !== undefined) {
-      Pause.encode(message.pause, writer.uint32(34).fork()).ldelim();
+      Pause.encode(message.pause, writer.uint32(42).fork()).ldelim();
     }
     if (message.resume !== undefined) {
-      Resume.encode(message.resume, writer.uint32(42).fork()).ldelim();
+      Resume.encode(message.resume, writer.uint32(50).fork()).ldelim();
     }
     if (message.handshake !== undefined) {
-      ClientHandshake.encode(message.handshake, writer.uint32(50).fork()).ldelim();
+      ClientHandshake.encode(message.handshake, writer.uint32(58).fork()).ldelim();
     }
     return writer;
   },
@@ -171,17 +186,24 @@ export const ClientMessage = {
             break;
           }
 
-          message.pause = Pause.decode(reader, reader.uint32());
+          message.fileReceive = FileReceive.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
             break;
           }
 
-          message.resume = Resume.decode(reader, reader.uint32());
+          message.pause = Pause.decode(reader, reader.uint32());
           continue;
         case 6:
           if (tag !== 50) {
+            break;
+          }
+
+          message.resume = Resume.decode(reader, reader.uint32());
+          continue;
+        case 7:
+          if (tag !== 58) {
             break;
           }
 
@@ -201,6 +223,7 @@ export const ClientMessage = {
       availableTasks: isSet(object.availableTasks) ? AvailableTasks.fromJSON(object.availableTasks) : undefined,
       execute: isSet(object.execute) ? ExecuteTask.fromJSON(object.execute) : undefined,
       fileResponse: isSet(object.fileResponse) ? FileResponse.fromJSON(object.fileResponse) : undefined,
+      fileReceive: isSet(object.fileReceive) ? FileReceive.fromJSON(object.fileReceive) : undefined,
       pause: isSet(object.pause) ? Pause.fromJSON(object.pause) : undefined,
       resume: isSet(object.resume) ? Resume.fromJSON(object.resume) : undefined,
       handshake: isSet(object.handshake) ? ClientHandshake.fromJSON(object.handshake) : undefined,
@@ -217,6 +240,9 @@ export const ClientMessage = {
     }
     if (message.fileResponse !== undefined) {
       obj.fileResponse = FileResponse.toJSON(message.fileResponse);
+    }
+    if (message.fileReceive !== undefined) {
+      obj.fileReceive = FileReceive.toJSON(message.fileReceive);
     }
     if (message.pause !== undefined) {
       obj.pause = Pause.toJSON(message.pause);
@@ -243,6 +269,9 @@ export const ClientMessage = {
       : undefined;
     message.fileResponse = (object.fileResponse !== undefined && object.fileResponse !== null)
       ? FileResponse.fromPartial(object.fileResponse)
+      : undefined;
+    message.fileReceive = (object.fileReceive !== undefined && object.fileReceive !== null)
+      ? FileReceive.fromPartial(object.fileReceive)
       : undefined;
     message.pause = (object.pause !== undefined && object.pause !== null) ? Pause.fromPartial(object.pause) : undefined;
     message.resume = (object.resume !== undefined && object.resume !== null)
@@ -1356,6 +1385,63 @@ export const FileRequest = {
   },
   fromPartial<I extends Exact<DeepPartial<FileRequest>, I>>(object: I): FileRequest {
     const message = createBaseFileRequest();
+    message.fileId = object.fileId ?? "";
+    return message;
+  },
+};
+
+function createBaseFileReceive(): FileReceive {
+  return { fileId: "" };
+}
+
+export const FileReceive = {
+  encode(message: FileReceive, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.fileId !== "") {
+      writer.uint32(10).string(message.fileId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): FileReceive {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileReceive();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fileId = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileReceive {
+    return { fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : "" };
+  },
+
+  toJSON(message: FileReceive): unknown {
+    const obj: any = {};
+    if (message.fileId !== "") {
+      obj.fileId = message.fileId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileReceive>, I>>(base?: I): FileReceive {
+    return FileReceive.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileReceive>, I>>(object: I): FileReceive {
+    const message = createBaseFileReceive();
     message.fileId = object.fileId ?? "";
     return message;
   },

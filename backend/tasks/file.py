@@ -6,6 +6,8 @@ import mimetypes
 from typing import Optional, IO, Any
 from contextlib import contextmanager
 
+import betterproto
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from proto.py.tasks import File as FileProto # type: ignore
 from proto.py import websocket as wsmsg
@@ -93,4 +95,16 @@ class File:
             )
         )
         await websocket.send_bytes(bytes(file_send_message))
-        return self.id
+        
+        # wait for the client to acknowledge the file
+        data = await websocket.receive_bytes()
+        message = wsmsg.ClientMessage().parse(data)
+        message_type, message_content = betterproto.which_one_of(message, "message")
+        
+        if message_type == "file_receive":
+            if message_content.file_receive.file_id == self.id:
+                return self.id
+
+            raise Exception(f"Unexpected file id in file_receive message: {message_content.file_receive.file_id}, expected {self.id}")
+        else:
+            raise Exception(f"Unexpected message type: {message_type}, expected 'file_receive'")

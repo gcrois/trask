@@ -292,13 +292,19 @@ export class APIWorker extends BaseWorker {
 				verbosePrint("Received file send", message.fileSend);
 				const { fileId, content } = message.fileSend;
 				const blob = base64ToBlob(content);
-				// this.taskQueue.addFile(blob, fileId);
+
 				this.taskQueue.addAssetEntry({
 					id: fileId as AssetEntry["id"],
 					file: blob,
 					size: blob.size,
 					hash: "hash",
 				})
+
+				// send file received response
+				const response = wsmsg.ClientMessage.create({
+					fileReceive: { fileId },
+				});
+				console.log("Sending file received response", response);
 			} else if (message.requestAvailableTasks) {
 				verbosePrint(
 					"Received request for available tasks",

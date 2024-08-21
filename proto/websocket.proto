@@ -8,10 +8,11 @@ message ClientMessage {
   oneof message {
     AvailableTasks available_tasks = 1;
     ExecuteTask execute = 2;
-    FileResponse file_response = 3;
-    Pause pause = 4;
-    Resume resume = 5;
-    ClientHandshake handshake = 6;
+    FileResponse file_response = 3; // server sends this (includes a file) after client requests a file
+    FileReceive file_receive = 4;   // client sends this after saving one of the server's files
+    Pause pause = 5;
+    Resume resume = 6;
+    ClientHandshake handshake = 7;
   }
 }
 
@@ -84,6 +85,10 @@ message ErrorResponse {
 }
 
 message FileRequest {
+  string file_id = 1;
+}
+
+message FileReceive {
   string file_id = 1;
 }
 

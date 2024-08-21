@@ -13,9 +13,10 @@ class ClientMessage(betterproto.Message):
     available_tasks: "AvailableTasks" = betterproto.message_field(1, group="message")
     execute: "ExecuteTask" = betterproto.message_field(2, group="message")
     file_response: "FileResponse" = betterproto.message_field(3, group="message")
-    pause: "Pause" = betterproto.message_field(4, group="message")
-    resume: "Resume" = betterproto.message_field(5, group="message")
-    handshake: "ClientHandshake" = betterproto.message_field(6, group="message")
+    file_receive: "FileReceive" = betterproto.message_field(4, group="message")
+    pause: "Pause" = betterproto.message_field(5, group="message")
+    resume: "Resume" = betterproto.message_field(6, group="message")
+    handshake: "ClientHandshake" = betterproto.message_field(7, group="message")
 
 
 @dataclass
@@ -110,6 +111,11 @@ class ErrorResponse(betterproto.Message):
 
 @dataclass
 class FileRequest(betterproto.Message):
+    file_id: str = betterproto.string_field(1)
+
+
+@dataclass
+class FileReceive(betterproto.Message):
     file_id: str = betterproto.string_field(1)
 
 

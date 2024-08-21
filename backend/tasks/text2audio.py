@@ -1,91 +1,76 @@
 import torch
-import torchaudio
-from einops import rearrange
-from stable_audio_tools import get_pretrained_model
-from stable_audio_tools.inference.generation import generate_diffusion_cond
-from tasks.task import Task
-from tasks.file import File
+import soundfile as sf
+from diffusers import StableAudioPipeline
 from io import BytesIO
 from random import randint
 from typing import Any
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
+from tasks.task import Task
+from tasks.file import File
 
 class Text2Audio(Task):
     def __init__(self):
         super().__init__()
-        self.model = None
-        self.model_config = None
-        self.sample_rate = None
-        self.sample_size = None
+        self.pipe = None
         self.add_task(self.execute, "Text2Audio", exclude_params=["send_update"])
 
     @classmethod
     def load(self):
         print("Loading Text2Audio model...")
-        # Download model
-        self.model, self.model_config = get_pretrained_model("stabilityai/stable-audio-open-1.0")
-        self.sample_rate = self.model_config["sample_rate"]
-        self.sample_size = self.model_config["sample_size"]
-        self.model = self.model.to(device)
+        self.pipe = StableAudioPipeline.from_pretrained("stabilityai/stable-audio-open-1.0", torch_dtype=torch.float16)
+        self.pipe = self.pipe.to("cuda" if torch.cuda.is_available() else "cpu")
 
     @classmethod
     def unload(self):
         print("Unloading Text2Audio model...")
-        self.model = None
-        self.model_config = None
-        self.sample_rate = None
-        self.sample_size = None
+        self.pipe = None
 
     @classmethod
-    async def execute(self, 
-                      prompt: str, 
-                      duration: int = 15, 
-                      steps: int = 100, 
-                      cfg_scale: float = 7.0, 
+    async def execute(self,
+                      prompt: str,
+                      negative_prompt: str = "Low quality.",
+                      duration: float = 10.0,
+                      num_inference_steps: int = 100,
+                      num_waveforms: int = 1,
+                      seed: int = 0,
                       send_update: Any = None
-                     ) -> File:
+                      ) -> File:
         """
         Generate audio from a text prompt using the Stable Audio model.
         Args:
         prompt (str): The text description of the audio to generate.
-        duration (int, optional): The duration of the audio in seconds. Defaults to 15.
-        steps (int, optional): The number of inference steps. Defaults to 100.
-        cfg_scale (float, optional): The classifier-free guidance scale. Defaults to 7.0.
+        negative_prompt (str, optional): Negative prompt for generation. Defaults to "Low quality."
+        duration (float, optional): The duration of the audio in seconds. Defaults to 10.0.
+        num_inference_steps (int, optional): The number of inference steps. Defaults to 200.
+        num_waveforms (int, optional): Number of waveforms to generate. Defaults to 1.
+        seed (int, optional): Seed for the random generator. If None, a random seed will be used.
         send_update (callable, optional): A function to send progress updates. Defaults to None.
         Returns:
         File: File object containing the generated audio in WAV format.
         """
-        if self.model is None:
+        if self.pipe is None:
             raise Exception("Model not loaded")
 
-        if send_update:
-            await send_update("Generating audio...")
+        # if send_update:
+        #     await send_update("Generating audio...")
 
-        conditioning = [{
-            "prompt": prompt,
-            "seconds_start": 0,
-            "seconds_total": duration
-        }]
+        generator = torch.Generator("cuda" if torch.cuda.is_available() else "cpu")
+        if seed is not None:
+            generator = generator.manual_seed(seed)
 
-        output = generate_diffusion_cond(
-            self.model,
-            steps=steps,
-            cfg_scale=cfg_scale,
-            conditioning=conditioning,
-            sample_size=self.sample_size,
-            sigma_min=0.3,
-            sigma_max=500,
-            sampler_type="dpmpp-3m-sde",
-            device=device
-        )
+        audio = self.pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            audio_end_in_s=duration,
+            num_waveforms_per_prompt=num_waveforms,
+            generator=generator,
+        ).audios
 
-        output = rearrange(output, "b d n -> d (b n)")
-        output = output.to(torch.float32).div(torch.max(torch.abs(output))).clamp(-1, 1).mul(32767).to(torch.int16).cpu()
+        output = audio[0].T.float().cpu().numpy()
 
         # Save to BytesIO object
         buffer = BytesIO()
-        torchaudio.save(buffer, output, self.sample_rate, format="wav")
+        sf.write(buffer, output, self.pipe.vae.sampling_rate, format="wav")
         buffer.seek(0)
 
         # Create a File object with a unique filename
@@ -94,7 +79,7 @@ class Text2Audio(Task):
         # Write the audio data to the file
         file.write(buffer.getvalue())
 
-        if send_update:
-            await send_update(f"Audio created and saved as {file.filename}")
+        # if send_update:
+        #     await send_update(f"Audio created and saved as {file.filename}")
 
         return file
