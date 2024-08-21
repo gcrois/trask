@@ -9,29 +9,6 @@ import betterproto
 
 
 @dataclass
-class Text2textRequest(betterproto.Message):
-    roles: List[str] = betterproto.string_field(1)
-    messages: List[str] = betterproto.string_field(2)
-    max_tokens: int = betterproto.int32_field(3)
-
-
-@dataclass
-class Text2textResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class File2textRequest(betterproto.Message):
-    file: "File" = betterproto.message_field(1)
-    max_tokens: int = betterproto.int32_field(2)
-
-
-@dataclass
-class File2textResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
 class Text2imageRequest(betterproto.Message):
     prompt: str = betterproto.string_field(1)
     size: str = betterproto.string_field(2)
@@ -40,29 +17,6 @@ class Text2imageRequest(betterproto.Message):
 
 @dataclass
 class Text2imageResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class Text2audioRequest(betterproto.Message):
-    prompt: str = betterproto.string_field(1)
-    duration: int = betterproto.int32_field(2)
-    steps: int = betterproto.int32_field(3)
-    cfg_scale: float = betterproto.float_field(4)
-
-
-@dataclass
-class Text2audioResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class Text2imagefileRequest(betterproto.Message):
-    prompt: str = betterproto.string_field(1)
-
-
-@dataclass
-class Text2imagefileResponse(betterproto.Message):
     result: "File" = betterproto.message_field(1)
 
 
@@ -77,22 +31,68 @@ class CapitalizeResponse(betterproto.Message):
 
 
 @dataclass
+class Text2textRequest(betterproto.Message):
+    roles: List[str] = betterproto.string_field(1)
+    messages: List[str] = betterproto.string_field(2)
+    max_tokens: int = betterproto.int32_field(3)
+
+
+@dataclass
+class Text2textResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2audioRequest(betterproto.Message):
+    prompt: str = betterproto.string_field(1)
+    duration: int = betterproto.int32_field(2)
+    steps: int = betterproto.int32_field(3)
+    cfg_scale: float = betterproto.float_field(4)
+
+
+@dataclass
+class Text2audioResponse(betterproto.Message):
+    result: "File" = betterproto.message_field(1)
+
+
+@dataclass
+class File2textRequest(betterproto.Message):
+    file: "File" = betterproto.message_field(1)
+    max_tokens: int = betterproto.int32_field(2)
+
+
+@dataclass
+class File2textResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2imagefileRequest(betterproto.Message):
+    prompt: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2imagefileResponse(betterproto.Message):
+    result: "File" = betterproto.message_field(1)
+
+
+@dataclass
 class TaskRequest(betterproto.Message):
-    text2text: "Text2textRequest" = betterproto.message_field(1, group="task")
-    file2text: "File2textRequest" = betterproto.message_field(2, group="task")
-    text2image: "Text2imageRequest" = betterproto.message_field(3, group="task")
+    text2image: "Text2imageRequest" = betterproto.message_field(1, group="task")
+    capitalize: "CapitalizeRequest" = betterproto.message_field(2, group="task")
+    text2text: "Text2textRequest" = betterproto.message_field(3, group="task")
     text2audio: "Text2audioRequest" = betterproto.message_field(4, group="task")
-    text2imagefile: "Text2imagefileRequest" = betterproto.message_field(5, group="task")
-    capitalize: "CapitalizeRequest" = betterproto.message_field(6, group="task")
+    file2text: "File2textRequest" = betterproto.message_field(5, group="task")
+    text2imagefile: "Text2imagefileRequest" = betterproto.message_field(6, group="task")
 
 
 @dataclass
 class TaskResponse(betterproto.Message):
-    text2text: "Text2textResponse" = betterproto.message_field(1, group="response")
-    file2text: "File2textResponse" = betterproto.message_field(2, group="response")
-    text2image: "Text2imageResponse" = betterproto.message_field(3, group="response")
+    text2image: "Text2imageResponse" = betterproto.message_field(1, group="response")
+    capitalize: "CapitalizeResponse" = betterproto.message_field(2, group="response")
+    text2text: "Text2textResponse" = betterproto.message_field(3, group="response")
     text2audio: "Text2audioResponse" = betterproto.message_field(4, group="response")
+    file2text: "File2textResponse" = betterproto.message_field(5, group="response")
     text2imagefile: "Text2imagefileResponse" = betterproto.message_field(
-        5, group="response"
+        6, group="response"
     )
-    capitalize: "CapitalizeResponse" = betterproto.message_field(6, group="response")
