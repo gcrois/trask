@@ -25,8 +25,8 @@ class Image2Caption(Task):
 
     @classmethod
     async def execute(cls,
-                      image_file: File,
-                      max_tokens: int = 100,
+                      image: File,
+                      tokens: int = 100,
                       client=client,
                       send_update: Callable[[str], Awaitable[None]] = noop
                       ) -> str:
