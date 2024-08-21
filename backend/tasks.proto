@@ -45,8 +45,8 @@ message Image2captionRequest {
   // client: <class 'inspect._empty'>
   // send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
 
-  File imageFile = 1;
-  int32 maxTokens = 2;
+  File image = 1;
+  int32 tokens = 2;
 }
 
 message Image2captionResponse {
