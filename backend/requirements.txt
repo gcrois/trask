@@ -7,3 +7,5 @@ betterproto
 uvicorn[standard]
 stable_audio_tools
 transformers
+diffusers
+betterproto[compiler]

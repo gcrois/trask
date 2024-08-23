@@ -10,15 +10,15 @@ from PIL import Image
 from typing import Any
 from uuid import uuid4
 
-class Text2ImageDraft(Task):
+class Text2Imagedraft(Task):
     def __init__(self):
         super().__init__()
         self.pipe = None
-        self.add_task(self.execute, "Text2ImageDraft", exclude_params=["send_update"])
+        self.add_task(self.execute, "Text2Imagedraft", exclude_params=["send_update"])
 
     @classmethod
     def load(self):
-        print("Loading Text2ImageDraft model...")
+        print("Loading Text2Imagedraft model...")
         base = "stabilityai/stable-diffusion-xl-base-1.0"
         repo = "ByteDance/SDXL-Lightning"
         ckpt = "sdxl_lightning_4step_unet.safetensors"
@@ -31,7 +31,7 @@ class Text2ImageDraft(Task):
 
     @classmethod
     def unload(self):
-        print("Unloading Text2ImageDraft model...")
+        print("Unloading Text2Imagedraft model...")
         self.pipe = None
 
     @classmethod

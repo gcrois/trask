@@ -68,7 +68,10 @@ def dump_logs():
 atexit.register(dump_logs)
 
 def base64_to_file(base64_str: str, file_path: str):
-    header, encoded = base64_str.split(",", 1)
+    try:
+        header, encoded = base64_str.split(",", 1)
+    except ValueError:
+        encoded = base64_str
     with open(file_path, 'wb') as f:
         f.write(base64.b64decode(encoded))
 

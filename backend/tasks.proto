@@ -2,57 +2,6 @@ syntax = "proto3";
 
 import "definitions.proto";
 
-message Text2imageRequest {
-  // Ignored parameters:
-  // send_update: typing.Any
-
-  string prompt = 1;
-  string size = 2;
-  int32 seed = 3;
-}
-
-message Text2imageResponse {
-  File result = 1;
-}
-
-message CapitalizeRequest {
-  // Ignored parameters:
-  // send_update: <class 'inspect._empty'>
-
-  string text = 1;
-}
-
-message CapitalizeResponse {
-  string result = 1;
-}
-
-message Text2textRequest {
-  // Ignored parameters:
-  // client: <class 'inspect._empty'>
-  // send_update: typing.Callable[[str], typing.Awaitable[typing.Literal['success']]]
-
-  repeated string roles = 1;
-  repeated string messages = 2;
-  int32 maxTokens = 3;
-}
-
-message Text2textResponse {
-  string result = 1;
-}
-
-message Image2captionRequest {
-  // Ignored parameters:
-  // client: <class 'inspect._empty'>
-  // send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
-
-  File image = 1;
-  int32 tokens = 2;
-}
-
-message Image2captionResponse {
-  string result = 1;
-}
-
 message Text2audioRequest {
   // Ignored parameters:
   // send_update: typing.Any
@@ -69,6 +18,46 @@ message Text2audioResponse {
   File result = 1;
 }
 
+message CapitalizeRequest {
+  // Ignored parameters:
+  // send_update: <class 'inspect._empty'>
+
+  string text = 1;
+}
+
+message CapitalizeResponse {
+  string result = 1;
+}
+
+message TurboeditRequest {
+  // Ignored parameters:
+  // send_update: typing.Any
+
+  File inputImage = 1;
+  string srcPrompt = 2;
+  string tgtPrompt = 3;
+  int32 seed = 4;
+  float w1 = 5;
+}
+
+message TurboeditResponse {
+  File result = 1;
+}
+
+message Text2textRequest {
+  // Ignored parameters:
+  // client: <class 'inspect._empty'>
+  // send_update: typing.Callable[[str], typing.Awaitable[typing.Literal['success']]]
+
+  repeated string roles = 1;
+  repeated string messages = 2;
+  int32 maxTokens = 3;
+}
+
+message Text2textResponse {
+  string result = 1;
+}
+
 message File2textRequest {
   // Ignored parameters:
   // client: <class 'inspect._empty'>
@@ -79,6 +68,18 @@ message File2textRequest {
 }
 
 message File2textResponse {
+  string result = 1;
+}
+
+message Text2promptRequest {
+  // Ignored parameters:
+  // send_update: typing.Callable[[str], typing.Awaitable[typing.Literal['success']]]
+
+  string prompt = 1;
+  int32 maxNewTokens = 2;
+}
+
+message Text2promptResponse {
   string result = 1;
 }
 
@@ -93,26 +94,72 @@ message Text2imagefileResponse {
   File result = 1;
 }
 
+message Text2imageRequest {
+  // Ignored parameters:
+  // send_update: typing.Any
+
+  string prompt = 1;
+  string size = 2;
+  int32 seed = 3;
+}
+
+message Text2imageResponse {
+  File result = 1;
+}
+
+message Image2captionRequest {
+  // Ignored parameters:
+  // client: <class 'inspect._empty'>
+  // send_update: typing.Callable[[str], typing.Awaitable[NoneType]]
+
+  File image = 1;
+  int32 tokens = 2;
+  string focus = 3;
+}
+
+message Image2captionResponse {
+  string result = 1;
+}
+
+message Text2imagedraftRequest {
+  // Ignored parameters:
+  // send_update: typing.Any
+
+  string prompt = 1;
+  string size = 2;
+  int32 seed = 3;
+}
+
+message Text2imagedraftResponse {
+  File result = 1;
+}
+
 message TaskRequest {
   oneof task {
-    Text2imageRequest text2image = 1;
+    Text2audioRequest text2audio = 1;
     CapitalizeRequest capitalize = 2;
-    Text2textRequest text2text = 3;
-    Image2captionRequest image2caption = 4;
-    Text2audioRequest text2audio = 5;
-    File2textRequest file2text = 6;
+    TurboeditRequest turboedit = 3;
+    Text2textRequest text2text = 4;
+    File2textRequest file2text = 5;
+    Text2promptRequest text2prompt = 6;
     Text2imagefileRequest text2imagefile = 7;
+    Text2imageRequest text2image = 8;
+    Image2captionRequest image2caption = 9;
+    Text2imagedraftRequest text2imagedraft = 10;
   }
 }
 
 message TaskResponse {
   oneof response {
-    Text2imageResponse text2image = 1;
+    Text2audioResponse text2audio = 1;
     CapitalizeResponse capitalize = 2;
-    Text2textResponse text2text = 3;
-    Image2captionResponse image2caption = 4;
-    Text2audioResponse text2audio = 5;
-    File2textResponse file2text = 6;
+    TurboeditResponse turboedit = 3;
+    Text2textResponse text2text = 4;
+    File2textResponse file2text = 5;
+    Text2promptResponse text2prompt = 6;
     Text2imagefileResponse text2imagefile = 7;
+    Text2imageResponse text2image = 8;
+    Image2captionResponse image2caption = 9;
+    Text2imagedraftResponse text2imagedraft = 10;
   }
 }
