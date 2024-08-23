@@ -28,6 +28,7 @@ class Image2Caption(Task):
                       image: File,
                       tokens: int = 100,
                       client=client,
+                      focus: str = "",
                       send_update: Callable[[str], Awaitable[None]] = noop
                       ) -> str:
         """
@@ -44,15 +45,22 @@ class Image2Caption(Task):
         with open(image.file_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        await send_update("Generating caption for the image")
+        # await send_update("Generating caption for the image")
+        
+        system_prompt = "Please provide a detailed caption for this image. Do not provide any surrounding context. Only return a caption for the image."
+        if (focus):
+            system_prompt += f"Pay particular attention to {focus}."
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Please provide a caption for this image."},
                         {
                             "type": "image_url",
                             "image_url": {
