@@ -3,6 +3,7 @@ from tasks.file import File
 from PIL import Image, ImageDraw, ImageFont
 from random import randint
 import io
+from uuid import uuid4
 
 class Text2Imagefile(Task):
     def __init__(self):
@@ -30,7 +31,7 @@ class Text2Imagefile(Task):
                       255 - image.getpixel((0, 0))[2])
         draw.text((10, 10), prompt, font=font, fill=text_color)
 
-        file = File(f"text2image_{randint(1000, 9999)}.png")
+        file = File(f"text2image_{uuid4()}.png")
         
         # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()

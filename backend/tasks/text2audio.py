@@ -6,6 +6,7 @@ from random import randint
 from typing import Any
 from tasks.task import Task
 from tasks.file import File
+from uuid import uuid4
 
 class Text2Audio(Task):
     def __init__(self):
@@ -74,7 +75,7 @@ class Text2Audio(Task):
         buffer.seek(0)
 
         # Create a File object with a unique filename
-        file = File(f"text2audio_{randint(1000, 9999)}.wav")
+        file = File(f"text2audio_{uuid4()}.wav")
         
         # Write the audio data to the file
         file.write(buffer.getvalue())

@@ -80,12 +80,15 @@ def load_tasks(task_names: List[str] = []):
     for filename in os.listdir(tasks_dir):
         if filename.endswith('.py') and filename != '__init__.py':
             module_name = filename[:-3]
-            module = importlib.import_module(module_name)
-            for name, obj in module.__dict__.items():
-                if isinstance(obj, type) and issubclass(obj, Task) and obj != Task:
-                    if not task_names or name in task_names:
-                        TASKS[name] = obj
-                        print(f"Enabled task: {name}")
+            try:
+                module = importlib.import_module(module_name)
+                for name, obj in module.__dict__.items():
+                    if isinstance(obj, type) and issubclass(obj, Task) and obj != Task:
+                        if not task_names or name in task_names:
+                            TASKS[name] = obj
+                            print(f"Enabled task: {name}")
+            except Exception as e:
+                print(f"Error loading task {module_name}: {e}")
     
     for task in task_names:
         if task not in TASKS:
