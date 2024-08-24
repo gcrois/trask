@@ -86,6 +86,13 @@ export class TaskQueue {
 		[key: string]: (TasksListener | TaskUpdateListener)[];
 	} = {};
 
+	clear() {
+		this.tasks.clear();
+		this.workers.clear();
+		this.emit(TaskQueueEvent.QueueChange);
+		this.emit(TaskQueueEvent.WorkerChange);
+	}
+
 	setFileManager(fileManager: FileManager) {
 		this.addFile = (blob, fileId) => fileManager.addFile(blob, fileId);
 		this.addAssetEntry = (asset) => fileManager.addAssetEntry(asset);
