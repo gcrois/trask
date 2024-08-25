@@ -298,7 +298,7 @@ export class APIWorker extends BaseWorker {
 					file: blob,
 					size: blob.size,
 					hash: "hash",
-				})
+				});
 
 				// send file received response
 				const response = wsmsg.ClientMessage.create({
