@@ -11,6 +11,7 @@ from diffusers.schedulers.scheduling_ddim import DDIMSchedulerOutput
 from functools import partial
 
 # https://betterze.github.io/TurboEdit/ -- thank you!
+# https://huggingface.co/spaces/turboedit/turbo_edit/tree/main
 class TurboEdit(Task):
     def __init__(self):
         super().__init__()

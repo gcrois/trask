@@ -14,6 +14,7 @@ import betterproto
 import uuid
 
 from time import sleep
+from random import randint
 
 from protobuf_generator import ProtoGenerator
 
@@ -180,7 +181,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.send_bytes(bytes(wsmsg.ServerMessage(handshake=wsmsg.ServerHandshake("0.0.0"))))
     
     # todo: kill this lmao
-    sleep(1)
+    sleep(randint(10, 30) / 10)
     
     # to start off, ask for available tasks
     await websocket.send_bytes(bytes(wsmsg.ServerMessage(request_available_tasks=wsmsg.RequestAvailableTasks(client_id=client_id))))
@@ -189,10 +190,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     try:
         while True:
             data = await websocket.receive_bytes()
-            verbose_print("Received raw message", data, client_id)
+            # verbose_print("Received raw message", data, client_id)
             
             client_message = wsmsg.ClientMessage().parse(data)
-            verbose_print("Parsed client message", client_message, client_id)
+            # verbose_print("Parsed client message", client_message, client_id)
             
             message_type, message_content = betterproto.which_one_of(client_message, "message")
             
@@ -345,7 +346,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 request_logs.append(request_log)
             
             elif message_type == "file_response":
-                verbose_print("Received file response", message_content, client_id)
+                verbose_print("Received file response", message_content.file_id, client_id)
                 # Handle file response
                 file_id = message_content.file_id
                 content = message_content.content
