@@ -1,5 +1,5 @@
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 from random import randint
 import io
 import torch
@@ -159,13 +159,13 @@ class TurboEdit(Task):
 
     @classmethod
     async def execute(self,
-                      input_image: File,
+                      input_image: FileReference,
                       src_prompt: str,
                       tgt_prompt: str,
                       seed: int = 7865,
                       w1: float = 1.5,
                       send_update: Any = None
-                      ) -> File:
+                      ) -> FileReference:
         if self.pipeline is None:
             raise Exception("Model not loaded")
 
@@ -228,7 +228,7 @@ class TurboEdit(Task):
         ).images[2]
 
         # Create a File object with a unique filename
-        file = File(f"turbo_edit_{randint(1000, 9999)}.png")
+        file = FileReference(f"turbo_edit_{randint(1000, 9999)}.png")
 
         # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()

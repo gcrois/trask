@@ -5,7 +5,7 @@ from io import BytesIO
 from random import randint
 from typing import Any
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 from uuid import uuid4
 
 class Text2Audio(Task):
@@ -34,7 +34,7 @@ class Text2Audio(Task):
                       num_waveforms: int = 1,
                       seed: int = 0,
                       send_update: Any = None
-                      ) -> File:
+                      ) -> FileReference:
         """
         Generate audio from a text prompt using the Stable Audio model.
         Args:
@@ -75,7 +75,7 @@ class Text2Audio(Task):
         buffer.seek(0)
 
         # Create a File object with a unique filename
-        file = File(f"text2audio_{uuid4()}.wav")
+        file = FileReference(f"text2audio_{uuid4()}.wav")
         
         # Write the audio data to the file
         file.write(buffer.getvalue())

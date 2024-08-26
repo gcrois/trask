@@ -1,6 +1,7 @@
 import mimetypes
 import traceback
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
@@ -11,7 +12,8 @@ from datetime import datetime
 import atexit
 import importlib
 import betterproto
-import uuid
+import asyncio
+import sqlite3
 
 from time import sleep
 from random import randint
@@ -19,7 +21,9 @@ from random import randint
 from protobuf_generator import ProtoGenerator
 
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
+
+from db import close_db_connection, get_file_path, add_file_mapping
 
 import base64
 
@@ -29,7 +33,13 @@ from proto.py import websocket as wsmsg
 
 file_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files')
 
-app = FastAPI()
+async def lifespan(app: FastAPI):
+    print("Starting server lifespan")
+    yield
+    close_db_connection()
+    print("Closed database connection")
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,7 +52,8 @@ active_connections: Dict[str, WebSocket] = {}
 request_logs: List[Dict] = []
 TASKS: Dict[str, Type[Task]] = {}
 loaded_tasks: Set[str] = set()
-available_files: Dict[str, File] = {}
+available_files: Dict[str, FileReference] = {}
+file_upload_events: Dict[str, asyncio.Event] = {}
 
 def adapt_name(task_name):
     pascal = ProtoGenerator.to_pascal_case(task_name)
@@ -136,6 +147,19 @@ def select_task(available_tasks: List[Dict]):
         if adapt_name(task['name']) in TASKS:
             return task
 
+async def wait_for_file_uploads(file_ids: List[str], timeout: float = 10.0):
+    events = []
+    for file_id in file_ids:
+        if file_id not in file_upload_events:
+            file_upload_events[file_id] = asyncio.Event()
+        events.append(file_upload_events[file_id].wait())
+    
+    try:
+        await asyncio.wait_for(asyncio.gather(*events), timeout=timeout)
+    except asyncio.TimeoutError:
+        missing_files = [file_id for file_id, event in zip(file_ids, events)]
+        raise HTTPException(status_code=408, detail=f"Timeout waiting for files: {', '.join(missing_files)}")
+
 VERBOSE = True  # Set this to False to disable verbose printing
 
 def verbose_print(action: str, message: Any, client_id: str = "NA"):
@@ -224,30 +248,31 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 verbose_print("Executing task", task_data, client_id)
                 print("TASK FILES", get_task_files(task_data[task_type.lower()]))
                 
-                # get file object for each file id
                 files = get_task_files(task_data[task_type.lower()])
+                missing_files = [file_id for file_id in files.values() if file_id not in available_files]
 
-                for param, file_id in files.items():
-                    if file_id in available_files:
-                        task_data[task_type.lower()][param] = available_files[file_id]
-                    else:
-                        # request file
+                if missing_files:
+                    for file_id in missing_files:
                         file_request = wsmsg.ServerMessage(file_request=wsmsg.FileRequest(file_id=file_id))
-                        # send file request
                         await websocket.send_bytes(bytes(file_request))
-                        # wait for file response
-                        file_response = await websocket.receive_bytes()
-                        # parse file response
-                        parsed_response = wsmsg.ClientMessage().parse(file_response)
-                        # get file content
-                        slim = parsed_response.file_response.content
-                        # save base64 string to file
-                        file_path = os.path.join(file_dir, file_id.split(':')[-1])
-                        base64_to_file(slim, file_path)
-                        # create File object
-                        file = File(file_path)
-                        task_data[task_type.lower()][param] = file
-                        available_files[file_id] = file
+                        verbose_print(f"Requested file: {file_id}", client_id)
+
+                    try:
+                        await wait_for_file_uploads(missing_files)
+                    except HTTPException as e:
+                        error_response = wsmsg.ServerMessage(
+                            error=wsmsg.ErrorResponse(
+                                task_id=task_id,
+                                error=str(e.detail)
+                            )
+                        )
+                        await websocket.send_bytes(bytes(error_response))
+                        continue
+
+                # All files are now available, proceed with task execution
+                for param, file_id in files.items():
+                    file_path = get_file_path(file_id)
+                    task_data[task_type.lower()][param] = FileReference(filename=os.path.basename(file_path))
                 
                 request_log = {
                     'time': datetime.now(),
@@ -291,8 +316,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                         
                         # recursively convert File objects to proto
                         async def convert_to_proto(obj):
-                            if isinstance(obj, File):
-                                await obj.send(websocket)
+                            if isinstance(obj, FileReference):
+                                await obj.notify_client(websocket)
                                 return obj.to_proto()
                             elif isinstance(obj, dict):
                                 return {k: convert_to_proto(v) for k, v in obj.items()}
@@ -370,6 +395,30 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     finally:
         del active_connections[client_id]
         verbose_print("Connection closed", f"Active connections: {len(active_connections)}", client_id)
+        
+@app.post("/api/upload/{file_id}")
+async def upload_file(file_id: str, file: UploadFile = File(...)):
+    file_path = os.path.join(file_dir, file.filename)
+    with open(file_path, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+    
+    add_file_mapping(file_id, file_path)
+    available_files[file_id] = FileReference(filename=file.filename)
+    
+    # Set the event to indicate the file has been uploaded
+    if file_id in file_upload_events:
+        file_upload_events[file_id].set()
+    
+    return {"message": f"File {file_id} uploaded successfully"}
+
+@app.get("/api/download/{file_id}")
+async def download_file(file_id: str):
+    try:
+        file_path = get_file_path(file_id)
+        return FileResponse(file_path, filename=os.path.basename(file_path))
+    except HTTPException as e:
+        raise e
         
 if __name__ == "__main__":
     import uvicorn

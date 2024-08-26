@@ -1,5 +1,5 @@
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 from PIL import Image, ImageDraw, ImageFont
 from random import randint
 import io
@@ -22,7 +22,7 @@ class Text2Imagefile(Task):
     async def execute(self,
                       prompt: str,
                       send_update = None
-                     ) -> File:
+                     ) -> FileReference:
         image = Image.new('RGB', (512, 512), (randint(0, 255), randint(0, 255), randint(0, 255)))
         draw = ImageDraw.Draw(image)
         font = ImageFont.load_default()
@@ -31,7 +31,7 @@ class Text2Imagefile(Task):
                       255 - image.getpixel((0, 0))[2])
         draw.text((10, 10), prompt, font=font, fill=text_color)
 
-        file = File(f"text2image_{uuid4()}.png")
+        file = FileReference(f"text2image_{uuid4()}.png")
         
         # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()

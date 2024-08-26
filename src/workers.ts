@@ -153,27 +153,44 @@ function verbosePrint(action: string, message: unknown) {
 }
 
 export class APIWorker extends BaseWorker {
+    private handshaked: boolean = false;
+    private baseUrl: URL;
+    private wsUrl: URL;
+    private apiBaseUrl: URL;
 	private ws: WebSocket;
-	private handshaked: boolean = false;
 
-	constructor(wsEndpoint: string, taskQueue: TaskQueue) {
-		super(taskQueue);
-		this.setStatus(WorkerStatus.Paused);
-		this.setMessage("Connecting to server...");
+    constructor(baseUrl: string, taskQueue: TaskQueue) {
+        super(taskQueue);
+        
+        // Parse the base URL
+        this.baseUrl = new URL(baseUrl);
+        
+        // Construct the WebSocket URL
+        this.wsUrl = new URL(this.baseUrl);
+        this.wsUrl.protocol = this.baseUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        this.wsUrl.pathname = '/ws/w';
+        
+        // Construct the API base URL
+        this.apiBaseUrl = new URL(this.baseUrl);
+        this.apiBaseUrl.pathname = '/api';
 
-		this.ws = new WebSocket(new URL(this.id, wsEndpoint));
+        this.setStatus(WorkerStatus.Paused);
+        this.setMessage(`Connecting to server... ${this.baseUrl}`);
+        verbosePrint(`Creating API worker ${this.baseUrl}`, this.id);
 
-		this.ws.onopen = () => {
-			verbosePrint("WebSocket connection established", this.id);
-			// send handshake, expecting a handshake response
-			this.ws.send(
-				wsmsg.ClientMessage.encode({
-					handshake: { version: "0.0.0" },
-				}).finish(),
-			);
-			this.setMessage("Connected to server");
-			this.setStatus(WorkerStatus.Idle);
-		};
+        this.ws = new WebSocket(this.wsUrl);
+
+        this.ws.onopen = () => {
+            verbosePrint("WebSocket connection established", this.id);
+            this.ws.send(
+                wsmsg.ClientMessage.encode({
+                    handshake: { version: "0.0.0" },
+                }).finish(),
+            );
+            this.setMessage("Connected to server");
+            this.setStatus(WorkerStatus.Idle);
+        };
+
 
 		this.ws.onmessage = async (event) => {
 			let arrayBuffer: ArrayBuffer;
@@ -273,39 +290,11 @@ export class APIWorker extends BaseWorker {
 					);
 				}
 			} else if (message.fileRequest) {
-				verbosePrint("Received file request", message.fileRequest);
-				const file = await this.taskQueue.getFile(
-					message.fileRequest.fileId,
-				);
-				if (file) {
-					const content = await assetEntryToBase64(file);
-					const response = wsmsg.ClientMessage.create({
-						fileResponse: {
-							fileId: file.id,
-							content: content,
-						},
-					});
-					verbosePrint("Sending file response", response);
-					this.ws.send(wsmsg.ClientMessage.encode(response).finish());
-				}
+                verbosePrint("Received file request", message.fileRequest);
+                this.uploadFile(message.fileRequest.fileId as AssetEntry["id"]);
 			} else if (message.fileSend) {
-				verbosePrint("Received file send", message.fileSend);
-				const { fileId, content } = message.fileSend;
-				const blob = base64ToBlob(content);
-
-				this.taskQueue.addAssetEntry({
-					id: fileId as AssetEntry["id"],
-					file: blob,
-					size: blob.size,
-					hash: "hash",
-				});
-
-				// send file received response
-				const response = wsmsg.ClientMessage.create({
-					fileReceive: { fileId },
-				});
-				console.log("Sending file received response", response);
-				this.ws.send(wsmsg.ClientMessage.encode(response).finish());
+                verbosePrint("Received file send notification", message.fileSend);
+                await this.receiveFile(message.fileSend.fileId);
 			} else if (message.requestAvailableTasks) {
 				verbosePrint(
 					"Received request for available tasks",
@@ -409,4 +398,60 @@ export class APIWorker extends BaseWorker {
 			console.error("Error closing WebSocket", e);
 		}
 	};
+
+    private async uploadFile(fileId: AssetEntry["id"]): Promise<void> {
+        const file = await this.taskQueue.getFile(fileId);
+        if (file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file.file, file.id);
+
+                const response = await fetch(`${this.apiBaseUrl}/upload/${fileId}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    verbosePrint("File uploaded successfully", fileId);
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                verbosePrint("Error uploading file", error);
+                throw error;
+            }
+        } else {
+            verbosePrint("File not found", fileId);
+            throw new Error(`File not found: ${fileId}`);
+        }
+    }
+
+	private async uploadFiles(fileIds: AssetEntry["id"][]): Promise<void> {
+        try {
+            await Promise.all(fileIds.map(fileId => this.uploadFile(fileId)));
+        } catch (error) {
+            verbosePrint("Error uploading files", error);
+            throw error;
+        }
+    }
+
+    private async receiveFile(fileId: string) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/download/${fileId}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                this.taskQueue.addAssetEntry({
+                    id: fileId as AssetEntry["id"],
+                    file: blob,
+                    size: blob.size,
+                    hash: "hash",
+                });
+                verbosePrint("File received and added to asset entry", fileId);
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        } catch (error) {
+            verbosePrint("Error receiving file", error);
+        }
+    }
 }

@@ -1,6 +1,6 @@
 from typing import Callable, Awaitable
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 from tasks.openai_client import client
 import base64
 from PIL import Image
@@ -54,7 +54,7 @@ class Image2Caption(Task):
 
     @classmethod
     async def execute(cls,
-                      image: File,
+                      image: FileReference,
                       tokens: int = 100,
                       client=client,
                       focus: str = "",

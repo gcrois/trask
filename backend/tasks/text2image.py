@@ -1,5 +1,5 @@
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 from random import randint
 import io
 import torch
@@ -31,7 +31,7 @@ class Text2Image(Task):
                       size: str = "1024x1024",
                       seed: int = 0,
                       send_update: Any = None
-                     ) -> File:
+                     ) -> FileReference:
         if self.pipe is None:
             raise Exception("Model not loaded")
 
@@ -64,7 +64,7 @@ class Text2Image(Task):
         ).images[0]
 
         # Create a File object with a unique filename
-        file = File(f"text2image_{uuid4()}.png")
+        file = FileReference(f"text2image_{uuid4()}.png")
         
         # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()

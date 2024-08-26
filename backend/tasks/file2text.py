@@ -2,7 +2,7 @@ from typing import List, Tuple, Callable, Awaitable
 from functools import wraps
 from tasks.openai_client import client
 from tasks.task import Task
-from tasks.file import File
+from tasks.file import FileReference
 
 def noop(*args, **kwargs):
     print("Noop called", args, kwargs)
@@ -25,7 +25,7 @@ class File2Text(Task):
 
     @classmethod
     async def execute(cls,
-        file: File,
+        file: FileReference,
         max_tokens: int = 100,
         client = client,
         send_update: Callable[[str], Awaitable[None]] = noop
@@ -33,6 +33,10 @@ class File2Text(Task):
         print(f"File2Text: {file}")
         
         # open file at path
-        with open(file.file_path, 'r') as f:
-            text = f.read()
-        return text
+        with open(file.file_path, 'rb') as f:
+            # get filesize
+            f.seek(0, 2)
+            filesize = f.tell()
+            f.seek(0)
+            
+        return f"File2Text: {file.file_path} ({filesize} bytes)"

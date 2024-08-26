@@ -13,15 +13,18 @@ def import_all_task_files(tasks_dir: str = './tasks') -> List[str]:
         if filename.endswith('.py') and filename != '__init__.py':
             print(f"Found task file: {filename}")
             module_name = filename[:-3]  # Remove .py extension
-            module = importlib.import_module(module_name)
-            imported_modules.append(module_name)
-            print(f"Imported module: {module_name}")
-            # Find and register Task subclasses
-            for name, obj in module.__dict__.items():
-                if isinstance(obj, type) and issubclass(obj, Task) and obj != Task:
-                    print(f"Found Task subclass: {name}")
-                    task_instance = obj()
-                    proto_gen.add_task(task_instance)
+            try:
+                module = importlib.import_module(module_name)
+                imported_modules.append(module_name)
+                print(f"Imported module: {module_name}")
+                # Find and register Task subclasses
+                for name, obj in module.__dict__.items():
+                    if isinstance(obj, type) and issubclass(obj, Task) and obj != Task:
+                        print(f"Found Task subclass: {name}")
+                        task_instance = obj()
+                        proto_gen.add_task(task_instance)
+            except Exception as e:
+                print(f"Failed to import module {module_name}: {e}")
     return imported_modules
 
 def generate_proto_file(output_file: str = 'tasks.proto') -> None:

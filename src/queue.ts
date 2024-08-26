@@ -3,7 +3,7 @@ import { TWorker } from "./workers";
 import { v4 as uuid } from "uuid";
 import * as wsmsg from "../proto/ts/websocket";
 
-type FileID = `asset:${string}`;
+type FileID = `asset-${string}`;
 
 export interface AssetEntry extends Omit<FileReference, "type"> {
 	id: FileID;
