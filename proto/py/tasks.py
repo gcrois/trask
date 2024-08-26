@@ -9,55 +9,6 @@ import betterproto
 
 
 @dataclass
-class Text2textRequest(betterproto.Message):
-    roles: List[str] = betterproto.string_field(1)
-    messages: List[str] = betterproto.string_field(2)
-    max_tokens: int = betterproto.int32_field(3)
-
-
-@dataclass
-class Text2textResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class TurboeditRequest(betterproto.Message):
-    input_image: "File" = betterproto.message_field(1)
-    src_prompt: str = betterproto.string_field(2)
-    tgt_prompt: str = betterproto.string_field(3)
-    seed: int = betterproto.int32_field(4)
-    w1: float = betterproto.float_field(5)
-
-
-@dataclass
-class TurboeditResponse(betterproto.Message):
-    result: "File" = betterproto.message_field(1)
-
-
-@dataclass
-class File2textRequest(betterproto.Message):
-    file: "File" = betterproto.message_field(1)
-    max_tokens: int = betterproto.int32_field(2)
-
-
-@dataclass
-class File2textResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
-class Image2captionRequest(betterproto.Message):
-    image: "File" = betterproto.message_field(1)
-    tokens: int = betterproto.int32_field(2)
-    focus: str = betterproto.string_field(3)
-
-
-@dataclass
-class Image2captionResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
 class Text2imagedraftRequest(betterproto.Message):
     prompt: str = betterproto.string_field(1)
     size: str = betterproto.string_field(2)
@@ -82,6 +33,66 @@ class Text2imageResponse(betterproto.Message):
 
 
 @dataclass
+class CapitalizeRequest(betterproto.Message):
+    text: str = betterproto.string_field(1)
+
+
+@dataclass
+class CapitalizeResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2textRequest(betterproto.Message):
+    roles: List[str] = betterproto.string_field(1)
+    messages: List[str] = betterproto.string_field(2)
+    max_tokens: int = betterproto.int32_field(3)
+
+
+@dataclass
+class Text2textResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Image2captionRequest(betterproto.Message):
+    image: "File" = betterproto.message_field(1)
+    tokens: int = betterproto.int32_field(2)
+    focus: str = betterproto.string_field(3)
+
+
+@dataclass
+class Image2captionResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
+class Text2audioRequest(betterproto.Message):
+    prompt: str = betterproto.string_field(1)
+    negative_prompt: str = betterproto.string_field(2)
+    duration: float = betterproto.float_field(3)
+    num_inference_steps: int = betterproto.int32_field(4)
+    num_waveforms: int = betterproto.int32_field(5)
+    seed: int = betterproto.int32_field(6)
+
+
+@dataclass
+class Text2audioResponse(betterproto.Message):
+    result: "File" = betterproto.message_field(1)
+
+
+@dataclass
+class File2textRequest(betterproto.Message):
+    file: "File" = betterproto.message_field(1)
+    max_tokens: int = betterproto.int32_field(2)
+
+
+@dataclass
+class File2textResponse(betterproto.Message):
+    result: str = betterproto.string_field(1)
+
+
+@dataclass
 class Text2promptRequest(betterproto.Message):
     prompt: str = betterproto.string_field(1)
     max_new_tokens: int = betterproto.int32_field(2)
@@ -90,6 +101,20 @@ class Text2promptRequest(betterproto.Message):
 @dataclass
 class Text2promptResponse(betterproto.Message):
     result: str = betterproto.string_field(1)
+
+
+@dataclass
+class TurboeditRequest(betterproto.Message):
+    input_image: "File" = betterproto.message_field(1)
+    src_prompt: str = betterproto.string_field(2)
+    tgt_prompt: str = betterproto.string_field(3)
+    seed: int = betterproto.int32_field(4)
+    w1: float = betterproto.float_field(5)
+
+
+@dataclass
+class TurboeditResponse(betterproto.Message):
+    result: "File" = betterproto.message_field(1)
 
 
 @dataclass
@@ -103,44 +128,38 @@ class Text2imagefileResponse(betterproto.Message):
 
 
 @dataclass
-class CapitalizeRequest(betterproto.Message):
-    text: str = betterproto.string_field(1)
-
-
-@dataclass
-class CapitalizeResponse(betterproto.Message):
-    result: str = betterproto.string_field(1)
-
-
-@dataclass
 class TaskRequest(betterproto.Message):
-    text2text: "Text2textRequest" = betterproto.message_field(1, group="task")
-    turboedit: "TurboeditRequest" = betterproto.message_field(2, group="task")
-    file2text: "File2textRequest" = betterproto.message_field(3, group="task")
-    image2caption: "Image2captionRequest" = betterproto.message_field(4, group="task")
     text2imagedraft: "Text2imagedraftRequest" = betterproto.message_field(
-        5, group="task"
+        1, group="task"
     )
-    text2image: "Text2imageRequest" = betterproto.message_field(6, group="task")
-    text2prompt: "Text2promptRequest" = betterproto.message_field(7, group="task")
-    text2imagefile: "Text2imagefileRequest" = betterproto.message_field(8, group="task")
-    capitalize: "CapitalizeRequest" = betterproto.message_field(9, group="task")
+    text2image: "Text2imageRequest" = betterproto.message_field(2, group="task")
+    capitalize: "CapitalizeRequest" = betterproto.message_field(3, group="task")
+    text2text: "Text2textRequest" = betterproto.message_field(4, group="task")
+    image2caption: "Image2captionRequest" = betterproto.message_field(5, group="task")
+    text2audio: "Text2audioRequest" = betterproto.message_field(6, group="task")
+    file2text: "File2textRequest" = betterproto.message_field(7, group="task")
+    text2prompt: "Text2promptRequest" = betterproto.message_field(8, group="task")
+    turboedit: "TurboeditRequest" = betterproto.message_field(9, group="task")
+    text2imagefile: "Text2imagefileRequest" = betterproto.message_field(
+        10, group="task"
+    )
 
 
 @dataclass
 class TaskResponse(betterproto.Message):
-    text2text: "Text2textResponse" = betterproto.message_field(1, group="response")
-    turboedit: "TurboeditResponse" = betterproto.message_field(2, group="response")
-    file2text: "File2textResponse" = betterproto.message_field(3, group="response")
-    image2caption: "Image2captionResponse" = betterproto.message_field(
-        4, group="response"
-    )
     text2imagedraft: "Text2imagedraftResponse" = betterproto.message_field(
+        1, group="response"
+    )
+    text2image: "Text2imageResponse" = betterproto.message_field(2, group="response")
+    capitalize: "CapitalizeResponse" = betterproto.message_field(3, group="response")
+    text2text: "Text2textResponse" = betterproto.message_field(4, group="response")
+    image2caption: "Image2captionResponse" = betterproto.message_field(
         5, group="response"
     )
-    text2image: "Text2imageResponse" = betterproto.message_field(6, group="response")
-    text2prompt: "Text2promptResponse" = betterproto.message_field(7, group="response")
+    text2audio: "Text2audioResponse" = betterproto.message_field(6, group="response")
+    file2text: "File2textResponse" = betterproto.message_field(7, group="response")
+    text2prompt: "Text2promptResponse" = betterproto.message_field(8, group="response")
+    turboedit: "TurboeditResponse" = betterproto.message_field(9, group="response")
     text2imagefile: "Text2imagefileResponse" = betterproto.message_field(
-        8, group="response"
+        10, group="response"
     )
-    capitalize: "CapitalizeResponse" = betterproto.message_field(9, group="response")
