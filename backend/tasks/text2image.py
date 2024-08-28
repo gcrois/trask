@@ -3,10 +3,13 @@ from tasks.file import FileReference
 from random import randint
 import io
 import torch
-from diffusers import FluxPipeline
+from diffusers import FluxPipeline, StableDiffusionXLPipeline, UNet2DConditionModel, EulerDiscreteScheduler
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
 from PIL import Image
 from typing import Any
 from uuid import uuid4
+from sd_embed.embedding_funcs import get_weighted_text_embeddings_flux1, get_weighted_text_embeddings_sdxl
 
 class Text2Image(Task):
     def __init__(self):
@@ -19,6 +22,7 @@ class Text2Image(Task):
         print("Loading Text2Image model...")
         self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16)
         self.pipe.enable_sequential_cpu_offload()
+        print("Text2Image model loaded")
 
     @classmethod
     def unload(self):
@@ -28,53 +32,43 @@ class Text2Image(Task):
     @classmethod
     async def execute(self,
                       prompt: str,
+                      negative_prompt: str = "",
                       size: str = "1024x1024",
                       seed: int = 0,
                       send_update: Any = None
-                     ) -> FileReference:
+                      ) -> FileReference:
         if self.pipe is None:
             raise Exception("Model not loaded")
 
-        # if send_update:
-        #     await send_update("Generating image...")
-
         if seed == 0:
             seed = randint(0, 2**32 - 1)
-
-        steps = 2
-
-        # https://huggingface.co/docs/diffusers/en/using-diffusers/callback
-        def callback(pipe, step, timestep, callback_kwargs):
-            print(f"Step {step}/{steps}")
-            # if send_update:
-            #     send_update(f"Step {step}/{steps}")
-
-        width, height = map(int, size.split("x"))
         
+        steps = 2
+        width, height = map(int, size.split("x"))
         generator = torch.Generator("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Generate long prompt embeddings
+        prompt_embeds, pooled_prompt_embeds = get_weighted_text_embeddings_flux1(
+            pipe=self.pipe,
+            prompt=prompt,
+            neg_prompt=negative_prompt
+        )
+
         image = self.pipe(
-            prompt,
+            prompt_embeds=prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
             guidance_scale=2.0,
             num_inference_steps=steps,
             max_sequence_length=256,
             height=height,
             width=width,
             generator=generator.manual_seed(seed),
-            # callback_on_step_end=callback
         ).images[0]
 
-        # Create a File object with a unique filename
         file = FileReference(f"text2image_{uuid4()}.png")
-        
-        # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
         img_byte_arr.seek(0)
-        
-        # Write the image data to the file
         file.write(img_byte_arr.getvalue())
-
-        # if send_update:
-        #     await send_update(f"Image created and saved as {file.filename}")
 
         return file
