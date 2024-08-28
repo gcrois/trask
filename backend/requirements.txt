@@ -10,3 +10,5 @@ transformers
 diffusers
 betterproto[compiler]
 sqlite3
+git+https://github.com/xhinker/sd_embed.git@main
+optimum-quanto
